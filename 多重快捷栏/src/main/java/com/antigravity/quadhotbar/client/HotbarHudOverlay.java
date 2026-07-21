@@ -20,17 +20,25 @@ public class HotbarHudOverlay {
     @SuppressWarnings("removal")
     private static final ResourceLocation WIDGETS_TEXTURE = new ResourceLocation("textures/gui/widgets.png");
 
-    // 需要向上避让抬高 22 像素的 HUD 元素 ID 关键字
+    // 仅精准对底部血量、护甲、经验条、气泡、口渴水滴等底栏 HUD 进行 22 像素向上平移，绝对不上移角落/顶部 UI
     private static boolean shouldShiftUp(String id) {
         if (id == null) return false;
         String lower = id.toLowerCase();
-        return lower.contains("health") || lower.contains("armor") || lower.contains("food") ||
-                lower.contains("air") || lower.contains("experience") || lower.contains("mount") ||
-                lower.contains("thirst") || lower.contains("item_name") || lower.contains("status");
+
+        // 强行排除左上角/角落/顶部及神经网络状态栏
+        if (lower.contains("top") || lower.contains("corner") || lower.contains("map") || lower.contains("hnn")) {
+            return false;
+        }
+
+        // 精准匹配底部绑定的原版与口渴机制 HUD
+        return lower.endsWith(":player_health") || lower.endsWith(":armor_level") ||
+                lower.endsWith(":food_level") || lower.endsWith(":air_level") ||
+                lower.endsWith(":experience_bar") || lower.endsWith(":mount_health") ||
+                lower.endsWith(":item_name") || lower.contains("thirst_level") || lower.contains("thirst");
     }
 
     /**
-     * 在 Pre 阶段给血量、护甲、经验条、口渴水滴等 HUD 添加向上 22 像素的临时平移
+     * 在 Pre 阶段仅给底部血量、护甲、经验条、口渴水滴等 HUD 添加向上 22 像素的平移
      */
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onPreRenderOverlay(RenderGuiOverlayEvent.Pre event) {
