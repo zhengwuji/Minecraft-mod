@@ -3,6 +3,7 @@ package com.antigravity.foodbuffbag.client;
 import com.antigravity.foodbuffbag.FoodBuffBag;
 import com.antigravity.foodbuffbag.network.NetworkHandler;
 import com.antigravity.foodbuffbag.network.PacketOpenFoodBag;
+import com.mojang.blaze3d.platform.Lighting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
@@ -49,9 +50,15 @@ public class InventoryScreenButtonHandler {
         @Override
         public void renderWidget(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
             super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
-            // 在按钮中央渲染金苹果图标作为食物仓标识
+
+            // 使用矩阵栈隔离与 Lighting 恢复，彻底防止污染原版 InventoryScreen 的槽位悬停与 Tooltip 矩阵
+            guiGraphics.pose().pushPose();
             ItemStack goldenApple = new ItemStack(Items.GOLDEN_APPLE);
             guiGraphics.renderItem(goldenApple, this.getX() + 4, this.getY() + 4);
+            guiGraphics.pose().popPose();
+
+            // 还原 2D 平面 Lighting 渲染状态
+            Lighting.setupForFlatItems();
         }
     }
 }
