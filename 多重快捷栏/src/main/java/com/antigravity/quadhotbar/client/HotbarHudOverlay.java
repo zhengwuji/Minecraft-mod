@@ -10,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -20,13 +21,14 @@ public class HotbarHudOverlay {
     private static final ResourceLocation WIDGETS_TEXTURE = new ResourceLocation("textures/gui/widgets.png");
 
     /**
-     * 取消所有 HUD 向上平移，恢复原版位置。
-     * 改为在所有 HUD 渲染完毕或 Hotbar 渲染时，提升 Z 轴深度至最高层 (Z = 400) 置顶渲染第二层快捷栏。
+     * 关键修复：在血量 (PLAYER_HEALTH)、饥饿、气泡及物品名等所有 HUD Overlay 全部绘制完成之后 (EventPriority.LOWEST)，
+     * 最后绘制第二层快捷栏，使其绝对盖在血量红心/黄心/气泡/水滴的最上方，实现真正的最高层置顶！
      */
-    @SubscribeEvent
-    public static void onRenderHotbarOverlay(RenderGuiOverlayEvent.Post event) {
-        // 当原版 Hotbar 绘制完成后，进行置顶绘制第二层快捷栏
-        if (event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onPostRenderOverlay(RenderGuiOverlayEvent.Post event) {
+        // 在 ITEM_NAME 或 HOTBAR 的最末尾节点触发，确保后发制人盖在血量和水滴之上
+        if (event.getOverlay().id().equals(VanillaGuiOverlay.ITEM_NAME.id()) ||
+            event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
             renderTopmostSecondHotbar(event.getGuiGraphics());
         }
     }
@@ -44,13 +46,13 @@ public class HotbarHudOverlay {
         // 第二层快捷栏绘制在原版快捷栏正上方 (screenHeight - 44 处)
         int top = screenHeight - 44;
 
-        // 1. 完全隔离局部 Matrix 栈，并提升 Z 轴深度到 400 确保置顶渲染
+        // 1. 完全隔离局部 Matrix 栈，提升 Z 轴至 500
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(0, 0, 400);
+        guiGraphics.pose().translate(0, 0, 500);
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.disableDepthTest(); // 禁用深度测试，确保强制置顶在其他元素上方
+        RenderSystem.disableDepthTest(); // 禁用深度测试，强行压在血量水滴最上方
 
         // 2. 绘制第二层快捷栏背景 (9 个槽位)
         guiGraphics.blit(WIDGETS_TEXTURE, left, top, 0, 0, 182, 22);
@@ -64,7 +66,7 @@ public class HotbarHudOverlay {
 
             if (!stack.isEmpty()) {
                 guiGraphics.pose().pushPose();
-                // 在置顶 Z 轴层级内渲染物品与数量角标
+                // 确保数量为 1 且合法
                 guiGraphics.renderItem(player, stack, itemX, itemY, i);
                 guiGraphics.renderItemDecorations(mc.font, stack, itemX, itemY);
                 guiGraphics.pose().popPose();
@@ -75,7 +77,7 @@ public class HotbarHudOverlay {
         guiGraphics.flush();
         RenderSystem.disableDepthTest();
 
-        // 5. 归还全局 Pose 栈，绝对不泄露任何 Z 轴与矩阵修改
+        // 5. 归还全局 Pose 栈
         guiGraphics.pose().popPose();
     }
 }
