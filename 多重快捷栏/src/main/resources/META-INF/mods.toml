@@ -15,7 +15,7 @@ description='''
 [[dependencies.quadhotbar]]
     modId="forge"
     mandatory=true
-    versionRange="[47.4.21,)"
+    versionRange="[47.0.0,)"
     ordering="NONE"
     side="BOTH"
 

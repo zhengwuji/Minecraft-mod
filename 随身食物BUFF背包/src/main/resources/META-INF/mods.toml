@@ -1,26 +1,27 @@
 modLoader="javafml"
-loaderVersion="${loader_version_range}"
-license="${mod_license}"
+loaderVersion="[47,)"
+license="MIT"
 
 [[mods]]
-modId="${mod_id}"
-version="${mod_version}"
+modId="foodbuffbag"
+version="1.0"
 displayName="随身食物BUFF背包"
-authors="${mod_authors}"
+logoFile=""
+authors="Antigravity"
 description='''
-${mod_description}
+提供 100 页 (5400 槽位) 随身食物存放仓，自动识别并永久赋予所有模组食物的正面 BUFF 效果，纯净化负面药水状态。
 '''
 
-[[dependencies.${mod_id}]]
-    modId="minecraft"
+[[dependencies.foodbuffbag]]
+    modId="forge"
     mandatory=true
-    versionRange="${minecraft_version_range}"
+    versionRange="[47.0.0,)"
     ordering="NONE"
     side="BOTH"
 
-[[dependencies.${mod_id}]]
-    modId="forge"
+[[dependencies.foodbuffbag]]
+    modId="minecraft"
     mandatory=true
-    versionRange="${forge_version_range}"
+    versionRange="[1.20.1,1.21)"
     ordering="NONE"
     side="BOTH"
