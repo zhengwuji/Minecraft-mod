@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "reinforced_tools:reinforced_wood_hoe",
+    "reinforced_tools:reinforced_stone_hoe",
+    "reinforced_tools:reinforced_copper_hoe",
+    "reinforced_tools:reinforced_iron_hoe",
+    "reinforced_tools:reinforced_gold_hoe",
+    "reinforced_tools:reinforced_diamond_hoe",
+    "reinforced_tools:reinforced_netherite_hoe"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "reinforced_tools:reinforced_wood_mining_hammer",
+    "reinforced_tools:reinforced_stone_mining_hammer",
+    "reinforced_tools:reinforced_copper_mining_hammer",
+    "reinforced_tools:reinforced_iron_mining_hammer",
+    "reinforced_tools:reinforced_gold_mining_hammer",
+    "reinforced_tools:reinforced_diamond_mining_hammer",
+    "reinforced_tools:reinforced_netherite_mining_hammer"
+  ]
+}

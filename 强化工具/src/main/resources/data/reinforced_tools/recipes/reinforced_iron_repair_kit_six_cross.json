@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ "A A", "ABA", "A A" ],
+  "key": { "A": {"item": "minecraft:iron_ingot"}, "B": { "item": "minecraft:crafting_table" } },
+  "result": { "item": "reinforced_tools:reinforced_iron_repair_kit", "count": 6 }
+}

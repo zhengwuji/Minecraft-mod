@@ -1,0 +1,41 @@
+{
+  "values": {
+    "before": {
+      "minecraft:wooden_sword": 20,
+      "minecraft:wooden_pickaxe": 32,
+      "minecraft:wooden_axe": 32,
+      "minecraft:wooden_shovel": 16,
+      "minecraft:wooden_hoe": 24,
+
+      "minecraft:stone_sword": 6,
+      "minecraft:stone_pickaxe": 11,
+      "minecraft:stone_axe": 11,
+      "minecraft:stone_shovel": 9,
+      "minecraft:stone_hoe": 10,
+
+      "minecraft:iron_sword": 516,
+      "minecraft:iron_pickaxe": 776,
+      "minecraft:iron_axe": 776,
+      "minecraft:iron_shovel": 264,
+      "minecraft:iron_hoe": 520,
+
+      "minecraft:golden_sword": 4100,
+      "minecraft:golden_pickaxe": 6152,
+      "minecraft:golden_axe": 6152,
+      "minecraft:golden_shovel": 2056,
+      "minecraft:golden_hoe": 4104,
+
+      "minecraft:diamond_sword": 16388,
+      "minecraft:diamond_pickaxe": 24584,
+      "minecraft:diamond_axe": 24584,
+      "minecraft:diamond_shovel": 8200,
+      "minecraft:diamond_hoe": 16392,
+
+      "minecraft:netherite_sword": 73732,
+      "minecraft:netherite_pickaxe": 81928,
+      "minecraft:netherite_axe": 81928,
+      "minecraft:netherite_shovel": 65544,
+      "minecraft:netherite_hoe": 73736
+    }
+  }
+}

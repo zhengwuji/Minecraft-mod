@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ASP",
+    " R ",
+    " R "
+  ],
+  "key": {
+    "A": { "item": "reinforced_tools:reinforced_stone_axe" },
+    "S": { "item": "reinforced_tools:reinforced_stone_shovel" },
+    "P": { "item": "reinforced_tools:reinforced_stone_pickaxe" },
+    "R": { "item": "minecraft:cobblestone" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_stone_paxel", "count": 1 }
+}

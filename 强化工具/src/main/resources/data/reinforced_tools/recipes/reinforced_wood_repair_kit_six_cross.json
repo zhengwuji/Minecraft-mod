@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ "A A", "ABA", "A A" ],
+  "key": { "A": {"tag": "minecraft:planks"}, "B": { "item": "minecraft:crafting_table" } },
+  "result": { "item": "reinforced_tools:reinforced_wood_repair_kit", "count": 6 }
+}

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "AS",
+    "AR",
+    " R"
+  ],
+  "key": {
+    "A": { "item": "reinforced_tools:reinforced_stone_axe" },
+    "S": { "item": "reinforced_tools:reinforced_stone_sword" },
+    "R": { "item": "minecraft:cobblestone" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_stone_battle_axe", "count": 1 }
+}

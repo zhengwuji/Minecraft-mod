@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "AS",
+    "AR",
+    " R"
+  ],
+  "key": {
+    "A": { "item": "reinforced_tools:reinforced_gold_axe" },
+    "S": { "item": "reinforced_tools:reinforced_gold_sword" },
+    "R": { "item": "minecraft:gold_block" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_gold_battle_axe", "count": 1 }
+}

@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "reinforced_tools:reinforced_wood_shovel",
+    "reinforced_tools:reinforced_stone_shovel",
+    "reinforced_tools:reinforced_copper_shovel",
+    "reinforced_tools:reinforced_iron_shovel",
+    "reinforced_tools:reinforced_gold_shovel",
+    "reinforced_tools:reinforced_diamond_shovel",
+    "reinforced_tools:reinforced_netherite_shovel"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ " R ", " R ", "HHH" ],
+  "key": {
+    "R": { "item": "minecraft:diamond_block" },
+    "H": { "item": "minecraft:diamond_pickaxe" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_diamond_pickaxe", "count": 1 }
+}

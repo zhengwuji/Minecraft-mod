@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PSP",
+    " R ",
+    " R "
+  ],
+  "key": {
+    "P": { "item": "reinforced_tools:reinforced_stone_pickaxe" },
+    "S": { "item": "reinforced_tools:reinforced_stone_shovel" },
+    "R": { "item": "minecraft:cobblestone" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_stone_mining_hammer", "count": 1 }
+}

@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "AS",
+    "AR",
+    " R"
+  ],
+  "key": {
+    "A": { "item": "reinforced_tools:reinforced_wood_axe" },
+    "S": { "item": "reinforced_tools:reinforced_wood_sword" },
+    "R": { "item": "minecraft:oak_planks" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_wood_battle_axe", "count": 1 }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MMM",
+    "MTM",
+    "MMM"
+  ],
+  "key": {
+    "M": { "item": "minecraft:diamond_block" },
+    "T": { "item": "reinforced_tools:reinforced_diamond_mining_hammer" }
+  },
+  "result": {
+    "item": "reinforced_tools:reinforced_diamond_mining_hammer",
+    "count": 1,
+    "nbt": {
+      "Enchantments": [
+        { "id": "minecraft:efficiency", "lvl": 12 },
+        { "id": "minecraft:fortune", "lvl": 12 },
+        { "id": "minecraft:unbreaking", "lvl": 12 }
+      ]
+    }
+  }
+}

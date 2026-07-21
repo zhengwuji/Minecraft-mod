@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "reinforced_tools:reinforced_wood_battle_axe",
+    "reinforced_tools:reinforced_stone_battle_axe",
+    "reinforced_tools:reinforced_copper_battle_axe",
+    "reinforced_tools:reinforced_iron_battle_axe",
+    "reinforced_tools:reinforced_gold_battle_axe",
+    "reinforced_tools:reinforced_diamond_battle_axe",
+    "reinforced_tools:reinforced_netherite_battle_axe"
+  ]
+}

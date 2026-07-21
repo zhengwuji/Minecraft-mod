@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PSP",
+    " R ",
+    " R "
+  ],
+  "key": {
+    "P": { "item": "reinforced_tools:reinforced_iron_pickaxe" },
+    "S": { "item": "reinforced_tools:reinforced_iron_shovel" },
+    "R": { "item": "minecraft:iron_block" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_iron_mining_hammer", "count": 1 }
+}

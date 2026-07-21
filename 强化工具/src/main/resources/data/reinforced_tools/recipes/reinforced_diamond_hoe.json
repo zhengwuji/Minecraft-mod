@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ " R ", " R ", "HH " ],
+  "key": {
+    "R": { "item": "minecraft:diamond_block" },
+    "H": { "item": "minecraft:diamond_hoe" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_diamond_hoe", "count": 1 }
+}

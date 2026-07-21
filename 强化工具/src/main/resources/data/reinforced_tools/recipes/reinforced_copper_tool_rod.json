@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "R",
+    "R",
+    "R"
+  ],
+  "key": {
+    "R": { "item": "minecraft:copper_block" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_copper_tool_rod", "count": 2 }
+}

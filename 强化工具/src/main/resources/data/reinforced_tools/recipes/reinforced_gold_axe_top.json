@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ "AAA", " B ", "   " ],
+  "key": { "A": {"tag": "forge:ingots/gold"}, "B": { "item": "minecraft:golden_axe" } },
+  "result": { "item": "reinforced_tools:reinforced_gold_axe", "count": 1 }
+}

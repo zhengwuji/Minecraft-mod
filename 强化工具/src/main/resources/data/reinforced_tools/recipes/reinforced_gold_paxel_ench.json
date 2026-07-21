@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MMM",
+    "MTM",
+    "MMM"
+  ],
+  "key": {
+    "M": { "item": "minecraft:gold_block" },
+    "T": { "item": "reinforced_tools:reinforced_gold_paxel" }
+  },
+  "result": {
+    "item": "reinforced_tools:reinforced_gold_paxel",
+    "count": 1,
+    "nbt": {
+      "Enchantments": [
+        { "id": "minecraft:efficiency", "lvl": 9 },
+        { "id": "minecraft:fortune", "lvl": 9 },
+        { "id": "minecraft:sharpness", "lvl": 9 },
+        { "id": "minecraft:fire_aspect", "lvl": 9 },
+        { "id": "minecraft:unbreaking", "lvl": 9 }
+      ]
+    }
+  }
+}

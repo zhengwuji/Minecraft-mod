@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "AS",
+    "AR",
+    " R"
+  ],
+  "key": {
+    "A": { "item": "reinforced_tools:reinforced_copper_axe" },
+    "S": { "item": "reinforced_tools:reinforced_copper_sword" },
+    "R": { "item": "minecraft:copper_block" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_copper_battle_axe", "count": 1 }
+}

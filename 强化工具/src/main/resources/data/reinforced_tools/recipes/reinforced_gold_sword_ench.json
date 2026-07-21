@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MMM",
+    "MTM",
+    "MMM"
+  ],
+  "key": {
+    "M": { "item": "minecraft:gold_block" },
+    "T": { "item": "reinforced_tools:reinforced_gold_sword" }
+  },
+  "result": {
+    "item": "reinforced_tools:reinforced_gold_sword",
+    "count": 1,
+    "nbt": {
+      "Enchantments": [
+        { "id": "minecraft:sharpness", "lvl": 15 },
+        { "id": "minecraft:looting", "lvl": 15 },
+        { "id": "minecraft:unbreaking", "lvl": 15 }
+      ]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MMM",
+    "MTM",
+    "MMM"
+  ],
+  "key": {
+    "M": { "item": "minecraft:netherite_block" },
+    "T": { "item": "reinforced_tools:reinforced_netherite_sword" }
+  },
+  "result": {
+    "item": "reinforced_tools:reinforced_netherite_sword",
+    "count": 1,
+    "nbt": {
+      "Enchantments": [
+        { "id": "minecraft:sharpness", "lvl": 12 },
+        { "id": "minecraft:looting", "lvl": 12 },
+        { "id": "minecraft:unbreaking", "lvl": 12 }
+      ]
+    }
+  }
+}

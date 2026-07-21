@@ -1,0 +1,7 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ "A A", "ABA", "A A" ],
+  "key": { "A": {"item": "minecraft:oak_planks"}, "B": { "item": "minecraft:wooden_pickaxe" } },
+  "result": { "item": "reinforced_tools:reinforced_wood_pickaxe", "count": 1 }
+}

@@ -1,0 +1,12 @@
+{
+  "parent": "minecraft:block/cube",
+  "textures": {
+    "particle": "grimpack:block/diamond_workbench_side",
+    "down": "minecraft:block/diamond_block",
+    "up": "grimpack:block/diamond_workbench_top",
+    "north": "grimpack:block/diamond_workbench_side",
+    "east": "grimpack:block/diamond_workbench_side",
+    "south": "grimpack:block/diamond_workbench_side",
+    "west": "grimpack:block/diamond_workbench_side"
+  }
+}

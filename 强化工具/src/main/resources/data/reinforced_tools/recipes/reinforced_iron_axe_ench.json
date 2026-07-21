@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MMM",
+    "MTM",
+    "MMM"
+  ],
+  "key": {
+    "M": { "item": "minecraft:iron_block" },
+    "T": { "item": "reinforced_tools:reinforced_iron_axe" }
+  },
+  "result": {
+    "item": "reinforced_tools:reinforced_iron_axe",
+    "count": 1,
+    "nbt": {
+      "Enchantments": [
+        { "id": "minecraft:efficiency", "lvl": 5 },
+        { "id": "minecraft:fortune", "lvl": 5 },
+        { "id": "minecraft:unbreaking", "lvl": 5 }
+      ]
+    }
+  }
+}

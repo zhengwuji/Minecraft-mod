@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "reinforced_tools:reinforced_wood_axe",
+    "reinforced_tools:reinforced_stone_axe",
+    "reinforced_tools:reinforced_copper_axe",
+    "reinforced_tools:reinforced_iron_axe",
+    "reinforced_tools:reinforced_gold_axe",
+    "reinforced_tools:reinforced_diamond_axe",
+    "reinforced_tools:reinforced_netherite_axe"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "reinforced_tools:item/reinforced_wood_tool_rod"
+  }
+}

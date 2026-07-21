@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "R",
+    "R",
+    "R"
+  ],
+  "key": {
+    "R": { "item": "minecraft:cobblestone" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_stone_tool_rod", "count": 2 }
+}

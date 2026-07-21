@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [ " R ", " R ", " H " ],
+  "key": {
+    "R": { "item": "minecraft:oak_planks" },
+    "H": { "item": "minecraft:wooden_shovel" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_wood_shovel", "count": 1 }
+}

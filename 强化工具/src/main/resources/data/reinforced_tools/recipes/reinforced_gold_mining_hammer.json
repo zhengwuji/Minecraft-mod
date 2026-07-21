@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "PSP",
+    " R ",
+    " R "
+  ],
+  "key": {
+    "P": { "item": "reinforced_tools:reinforced_gold_pickaxe" },
+    "S": { "item": "reinforced_tools:reinforced_gold_shovel" },
+    "R": { "item": "minecraft:gold_block" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_gold_mining_hammer", "count": 1 }
+}

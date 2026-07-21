@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "R",
+    "R",
+    "R"
+  ],
+  "key": {
+    "R": { "item": "minecraft:diamond_block" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_diamond_tool_rod", "count": 2 }
+}

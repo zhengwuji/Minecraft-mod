@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Specification-Title: grimpack
+Specification-Vendor: Grim3212, Antigravity
+Specification-Version: 1
+Implementation-Title: workbench_mod_project
+Implementation-Version: 1.0.0
+Implementation-Vendor: Grim3212, Antigravity
+Implementation-Timestamp: 2026-07-18T06:29:16+0800
+

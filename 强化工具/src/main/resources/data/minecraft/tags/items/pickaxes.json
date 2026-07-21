@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "reinforced_tools:reinforced_wood_pickaxe",
+    "reinforced_tools:reinforced_stone_pickaxe",
+    "reinforced_tools:reinforced_copper_pickaxe",
+    "reinforced_tools:reinforced_iron_pickaxe",
+    "reinforced_tools:reinforced_gold_pickaxe",
+    "reinforced_tools:reinforced_diamond_pickaxe",
+    "reinforced_tools:reinforced_netherite_pickaxe"
+  ]
+}

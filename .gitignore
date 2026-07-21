@@ -1,0 +1,10 @@
+.gradle/
+**/build/
+**/run/
+**/.gradle/
+**/out/
+**/*.jar
+**/*.class
+.idea/
+*.iml
+*.heapdump

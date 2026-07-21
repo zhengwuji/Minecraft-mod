@@ -1,0 +1,12 @@
+{
+  "replace": false,
+  "values": [
+    "reinforced_tools:reinforced_wood_paxel",
+    "reinforced_tools:reinforced_stone_paxel",
+    "reinforced_tools:reinforced_copper_paxel",
+    "reinforced_tools:reinforced_iron_paxel",
+    "reinforced_tools:reinforced_gold_paxel",
+    "reinforced_tools:reinforced_diamond_paxel",
+    "reinforced_tools:reinforced_netherite_paxel"
+  ]
+}

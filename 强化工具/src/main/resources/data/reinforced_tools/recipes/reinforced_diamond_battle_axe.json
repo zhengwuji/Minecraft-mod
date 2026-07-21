@@ -1,0 +1,14 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "AS",
+    "AR",
+    " R"
+  ],
+  "key": {
+    "A": { "item": "reinforced_tools:reinforced_diamond_axe" },
+    "S": { "item": "reinforced_tools:reinforced_diamond_sword" },
+    "R": { "item": "minecraft:diamond_block" }
+  },
+  "result": { "item": "reinforced_tools:reinforced_diamond_battle_axe", "count": 1 }
+}
