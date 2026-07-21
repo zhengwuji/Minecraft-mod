@@ -8,8 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -21,22 +20,21 @@ public class HotbarHudOverlay {
     private static final ResourceLocation WIDGETS_TEXTURE = new ResourceLocation("textures/gui/widgets.png");
 
     /**
-     * 关键修复：在血量 (PLAYER_HEALTH)、饥饿、气泡及物品名等所有 HUD Overlay 全部绘制完成之后 (EventPriority.LOWEST)，
-     * 最后绘制第二层快捷栏，使其绝对盖在血量红心/黄心/气泡/水滴的最上方，实现真正的最高层置顶！
+     * 关键置顶逻辑：在 RenderGuiEvent.Post (整套 2D GUI 包含所有第三方心形/护甲/经验条 HUD 绘制完成后)
+     * 最后一刻绘制第二层快捷栏！配合 Z=999 与 disableDepthTest，实现 100% 绝对置顶盖在所有元素最上方！
      */
     @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onPostRenderOverlay(RenderGuiOverlayEvent.Post event) {
-        // 在 ITEM_NAME 或 HOTBAR 的最末尾节点触发，确保后发制人盖在血量和水滴之上
-        if (event.getOverlay().id().equals(VanillaGuiOverlay.ITEM_NAME.id()) ||
-            event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
-            renderTopmostSecondHotbar(event.getGuiGraphics());
-        }
+    public static void onRenderGuiPost(RenderGuiEvent.Post event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.screen != null || mc.options.hideGui) return; // 只有在游戏主画面且没有打开窗口时置顶显示
+
+        renderAbsoluteTopmostSecondHotbar(event.getGuiGraphics());
     }
 
-    private static void renderTopmostSecondHotbar(GuiGraphics guiGraphics) {
+    private static void renderAbsoluteTopmostSecondHotbar(GuiGraphics guiGraphics) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
-        if (player == null || mc.options.hideGui) return;
+        if (player == null) return;
 
         int screenWidth = mc.getWindow().getGuiScaledWidth();
         int screenHeight = mc.getWindow().getGuiScaledHeight();
@@ -46,13 +44,13 @@ public class HotbarHudOverlay {
         // 第二层快捷栏绘制在原版快捷栏正上方 (screenHeight - 44 处)
         int top = screenHeight - 44;
 
-        // 1. 完全隔离局部 Matrix 栈，提升 Z 轴至 500
+        // 1. 建立独占 Pose 矩阵，提升 Z 轴至 999 绝对顶层
         guiGraphics.pose().pushPose();
-        guiGraphics.pose().translate(0, 0, 500);
+        guiGraphics.pose().translate(0, 0, 999);
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.disableDepthTest(); // 禁用深度测试，强行压在血量水滴最上方
+        RenderSystem.disableDepthTest(); // 禁用深度测试，绝对压盖最上层
 
         // 2. 绘制第二层快捷栏背景 (9 个槽位)
         guiGraphics.blit(WIDGETS_TEXTURE, left, top, 0, 0, 182, 22);
@@ -66,18 +64,17 @@ public class HotbarHudOverlay {
 
             if (!stack.isEmpty()) {
                 guiGraphics.pose().pushPose();
-                // 确保数量为 1 且合法
                 guiGraphics.renderItem(player, stack, itemX, itemY, i);
                 guiGraphics.renderItemDecorations(mc.font, stack, itemX, itemY);
                 guiGraphics.pose().popPose();
             }
         }
 
-        // 4. 强制提交局域批处理，清空 Depth 深度测试与 Lighting 状态
+        // 4. 强制刷新渲染管线
         guiGraphics.flush();
         RenderSystem.disableDepthTest();
 
-        // 5. 归还全局 Pose 栈
+        // 5. 归还 Pose 矩阵，零内存/状态污染
         guiGraphics.pose().popPose();
     }
 }
