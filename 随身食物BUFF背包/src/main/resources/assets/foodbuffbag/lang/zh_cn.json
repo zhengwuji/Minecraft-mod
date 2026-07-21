@@ -1,4 +1,8 @@
 {
   "container.foodbuffbag.food_bag": "随身食物BUFF背包",
-  "tooltip.foodbuffbag.open_bag": "打开随身食物BUFF背包"
+  "tooltip.foodbuffbag.open_bag": "打开随身食物BUFF背包",
+  "tooltip.foodbuffbag.quick_deposit": "存入",
+  "tooltip.foodbuffbag.quick_deposit_desc": "一键将玩家背包内的所有带BUFF食物自动存入食物仓",
+  "tooltip.foodbuffbag.buff_overview": "§6🌟 随身食物仓 - 激活的永久BUFF总览",
+  "tooltip.foodbuffbag.no_active_buffs": "  §7目前尚未激活任何药水增益"
 }

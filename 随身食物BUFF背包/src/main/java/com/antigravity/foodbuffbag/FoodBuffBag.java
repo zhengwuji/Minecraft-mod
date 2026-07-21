@@ -2,6 +2,7 @@ package com.antigravity.foodbuffbag;
 
 import com.antigravity.foodbuffbag.capability.FoodBuffProvider;
 import com.antigravity.foodbuffbag.client.FoodBuffScreen;
+import com.antigravity.foodbuffbag.config.FoodBuffConfig;
 import com.antigravity.foodbuffbag.inventory.FoodBuffMenu;
 import com.antigravity.foodbuffbag.network.NetworkHandler;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -9,7 +10,9 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -31,6 +34,9 @@ public class FoodBuffBag {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         MENU_TYPES.register(modEventBus);
+
+        // 注册配置文件
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, FoodBuffConfig.SPEC);
 
         modEventBus.addListener(this::commonSetup);
         modEventBus.addListener(this::clientSetup);

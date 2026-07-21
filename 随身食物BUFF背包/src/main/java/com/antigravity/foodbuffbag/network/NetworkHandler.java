@@ -32,5 +32,12 @@ public class NetworkHandler {
                 PacketChangePage::new,
                 PacketChangePage::handle
         );
+        CHANNEL.registerMessage(
+                id++,
+                PacketQuickDeposit.class,
+                PacketQuickDeposit::toBytes,
+                PacketQuickDeposit::new,
+                PacketQuickDeposit::handle
+        );
     }
 }

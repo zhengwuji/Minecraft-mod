@@ -2,12 +2,14 @@ package com.antigravity.foodbuffbag.event;
 
 import com.antigravity.foodbuffbag.FoodBuffBag;
 import com.antigravity.foodbuffbag.capability.FoodBuffProvider;
+import com.antigravity.foodbuffbag.config.FoodBuffConfig;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -51,20 +53,31 @@ public class FoodBuffHandler {
         oldPlayer.invalidateCaps();
     }
 
-    // 3. 实时 ServerPlayer Tick，全量遍历 100 页 (5400 槽位) 保持注入所有食物 BUFF
+    // 3. 实时 ServerPlayer Tick，带早退优化与 De-buff 自动过滤
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.END && !event.player.level().isClientSide()) {
             ServerPlayer player = (ServerPlayer) event.player;
 
-            // 每 10 Tick (0.5秒) 全量扫描一次
-            if (player.tickCount % 10 == 0) {
+            int interval = FoodBuffConfig.SCAN_INTERVAL.get();
+            if (player.tickCount % interval == 0) {
                 player.getCapability(FoodBuffProvider.FOOD_BUFF_CAP).ifPresent(cap -> {
                     int totalSlots = cap.getSlots();
+                    int emptyStreak = 0;
+
                     for (int i = 0; i < totalSlots; i++) {
                         ItemStack stack = cap.getStackInSlot(i);
-                        if (stack.isEmpty()) continue;
+                        if (stack.isEmpty()) {
+                            emptyStreak++;
+                            // 性能优化早退判定：遇到连续 108 个空槽位（即整整 2 页为空）自动中断循环
+                            if (emptyStreak > 108) {
+                                break;
+                            }
+                            continue;
+                        }
 
+                        // 重置连续空槽计数
+                        emptyStreak = 0;
                         applyStackFoodEffects(player, stack);
                     }
                 });
@@ -73,12 +86,18 @@ public class FoodBuffHandler {
     }
 
     private static void applyStackFoodEffects(ServerPlayer player, ItemStack stack) {
+        boolean filterHarmful = FoodBuffConfig.FILTER_HARMFUL.get();
+
         // A. 通用 FoodProperties 药水效果解析（涵盖大部分原生及模组食物）
         FoodProperties food = stack.getItem().getFoodProperties(stack, player);
         if (food != null) {
             for (Pair<MobEffectInstance, Float> pair : food.getEffects()) {
                 MobEffectInstance origEffect = pair.getFirst();
                 if (origEffect != null) {
+                    // 自动过滤负面/有害药水效果
+                    if (filterHarmful && origEffect.getEffect().getCategory() == MobEffectCategory.HARMFUL) {
+                        continue;
+                    }
                     addOrRefreshInfiniteEffect(player, origEffect.getEffect(), origEffect.getAmplifier());
                 }
             }
@@ -94,6 +113,9 @@ public class FoodBuffHandler {
                     byte effectId = effectTag.getByte("EffectId");
                     MobEffect effect = MobEffect.byId(effectId);
                     if (effect != null) {
+                        if (filterHarmful && effect.getCategory() == MobEffectCategory.HARMFUL) {
+                            continue;
+                        }
                         addOrRefreshInfiniteEffect(player, effect, 0);
                     }
                 }
@@ -116,11 +138,10 @@ public class FoodBuffHandler {
         if (effect == null) return;
 
         MobEffectInstance existing = player.getEffect(effect);
-        // 如果玩家身上没有这个效果，或者已有效果等级小于或剩余时长较短，则刷新赋予持续时间为 300 Tick (15秒) 的 BUFF
         if (existing == null || existing.getAmplifier() < amplifier || existing.getDuration() < 100) {
             MobEffectInstance newEffect = new MobEffectInstance(
                     effect,
-                    300,            // 15 秒持续时间，每0.5秒刷新
+                    300,            // 15 秒持续时间
                     amplifier,
                     false,          // ambient
                     true,           // visible
