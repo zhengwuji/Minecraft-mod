@@ -10,7 +10,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
-import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
@@ -20,54 +19,19 @@ public class HotbarHudOverlay {
     @SuppressWarnings("removal")
     private static final ResourceLocation WIDGETS_TEXTURE = new ResourceLocation("textures/gui/widgets.png");
 
-    // 仅精准对底部血量、护甲、经验条、气泡、口渴水滴等底栏 HUD 进行 22 像素向上平移，绝对不上移角落/顶部 UI
-    private static boolean shouldShiftUp(String id) {
-        if (id == null) return false;
-        String lower = id.toLowerCase();
-
-        // 强行排除左上角/角落/顶部及神经网络状态栏
-        if (lower.contains("top") || lower.contains("corner") || lower.contains("map") || lower.contains("hnn")) {
-            return false;
-        }
-
-        // 精准匹配底部绑定的原版与口渴机制 HUD
-        return lower.endsWith(":player_health") || lower.endsWith(":armor_level") ||
-                lower.endsWith(":food_level") || lower.endsWith(":air_level") ||
-                lower.endsWith(":experience_bar") || lower.endsWith(":mount_health") ||
-                lower.endsWith(":item_name") || lower.contains("thirst_level") || lower.contains("thirst");
-    }
-
     /**
-     * 在 Pre 阶段仅给底部血量、护甲、经验条、口渴水滴等 HUD 添加向上 22 像素的平移
+     * 取消所有 HUD 向上平移，恢复原版位置。
+     * 改为在所有 HUD 渲染完毕或 Hotbar 渲染时，提升 Z 轴深度至最高层 (Z = 400) 置顶渲染第二层快捷栏。
      */
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void onPreRenderOverlay(RenderGuiOverlayEvent.Pre event) {
-        String overlayId = event.getOverlay().id().toString();
-
-        if (shouldShiftUp(overlayId)) {
-            event.getGuiGraphics().pose().pushPose();
-            event.getGuiGraphics().pose().translate(0, -22, 0);
-        }
-    }
-
-    /**
-     * 在 Post 阶段恢复平移，弹栈还原
-     */
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onPostRenderOverlay(RenderGuiOverlayEvent.Post event) {
-        String overlayId = event.getOverlay().id().toString();
-
-        if (shouldShiftUp(overlayId)) {
-            event.getGuiGraphics().pose().popPose();
-        }
-
-        // 当原版 Hotbar 渲染完成后，绘制第二层快捷栏
+    @SubscribeEvent
+    public static void onRenderHotbarOverlay(RenderGuiOverlayEvent.Post event) {
+        // 当原版 Hotbar 绘制完成后，进行置顶绘制第二层快捷栏
         if (event.getOverlay().id().equals(VanillaGuiOverlay.HOTBAR.id())) {
-            renderSecondHotbarLayer(event.getGuiGraphics());
+            renderTopmostSecondHotbar(event.getGuiGraphics());
         }
     }
 
-    private static void renderSecondHotbarLayer(GuiGraphics guiGraphics) {
+    private static void renderTopmostSecondHotbar(GuiGraphics guiGraphics) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         if (player == null || mc.options.hideGui) return;
@@ -77,14 +41,16 @@ public class HotbarHudOverlay {
 
         // 原版快捷栏居中，宽度 182，起点为 screenWidth / 2 - 91
         int left = screenWidth / 2 - 91;
-        // 原版快捷栏顶部坐标为 screenHeight - 22。第二层快捷栏绘制在 screenHeight - 44 处
+        // 第二层快捷栏绘制在原版快捷栏正上方 (screenHeight - 44 处)
         int top = screenHeight - 44;
 
-        // 1. 完全隔离局部 Matrix 栈
+        // 1. 完全隔离局部 Matrix 栈，并提升 Z 轴深度到 400 确保置顶渲染
         guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 400);
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+        RenderSystem.disableDepthTest(); // 禁用深度测试，确保强制置顶在其他元素上方
 
         // 2. 绘制第二层快捷栏背景 (9 个槽位)
         guiGraphics.blit(WIDGETS_TEXTURE, left, top, 0, 0, 182, 22);
@@ -98,6 +64,7 @@ public class HotbarHudOverlay {
 
             if (!stack.isEmpty()) {
                 guiGraphics.pose().pushPose();
+                // 在置顶 Z 轴层级内渲染物品与数量角标
                 guiGraphics.renderItem(player, stack, itemX, itemY, i);
                 guiGraphics.renderItemDecorations(mc.font, stack, itemX, itemY);
                 guiGraphics.pose().popPose();
@@ -108,7 +75,7 @@ public class HotbarHudOverlay {
         guiGraphics.flush();
         RenderSystem.disableDepthTest();
 
-        // 5. 归还全局 Pose 栈，确保与背包及任何后续界面绝对隔离
+        // 5. 归还全局 Pose 栈，绝对不泄露任何 Z 轴与矩阵修改
         guiGraphics.pose().popPose();
     }
 }
