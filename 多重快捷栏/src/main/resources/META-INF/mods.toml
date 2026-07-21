@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="quadhotbar"
+version="1.0"
+displayName="多重快捷栏"
+logoFile=""
+authors="Antigravity"
+description='''
+支持 4 层快捷栏快捷无缝切换，零 GUI 坐标矩阵污染，完美兼容 1.20.1 所有容器与界面！
+'''
+
+[[dependencies.quadhotbar]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47.4.21,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.quadhotbar]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
