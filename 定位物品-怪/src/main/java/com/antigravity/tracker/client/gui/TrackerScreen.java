@@ -255,7 +255,7 @@ public class TrackerScreen extends Screen {
 
     private void enableAllFiltered() {
         for (TargetItem item : filteredList) {
-            setTrackedGrouped(item, true, getColor(item));
+            setTracked(item, true, getColor(item));
         }
         TrackerConfig.saveConfig();
         rebuildWidgets();
@@ -338,7 +338,7 @@ public class TrackerScreen extends Screen {
                 if (mouseX >= guiLeft + 270 && mouseX <= guiLeft + 325 && mouseY >= itemY + 2 && mouseY <= itemY + ITEM_HEIGHT - 4) {
                     boolean tracked = isTracked(item);
                     int curColor = getColor(item);
-                    setTrackedGrouped(item, !tracked, curColor);
+                    setTracked(item, !tracked, curColor);
                     rebuildWidgets();
                     return true;
                 }
@@ -347,7 +347,7 @@ public class TrackerScreen extends Screen {
                 if (mouseX >= guiLeft + 330 && mouseX <= guiLeft + 375 && mouseY >= itemY + 2 && mouseY <= itemY + ITEM_HEIGHT - 4) {
                     int curColor = getColor(item);
                     int nextColor = TrackerConfig.getNextColor(curColor);
-                    setTrackedGrouped(item, true, nextColor);
+                    setTracked(item, true, nextColor);
                     rebuildWidgets();
                     return true;
                 }
@@ -368,82 +368,11 @@ public class TrackerScreen extends Screen {
         return TrackerConfig.getItemColor(item.id);
     }
 
-    private void setTrackedGrouped(TargetItem item, boolean track, int color) {
-        String lowerId = item.id.toLowerCase(Locale.ROOT);
-        String lowerName = item.chineseName.toLowerCase(Locale.ROOT);
-
-        // 1. 判断是否为【箱子/宝箱/木桶/容器类】组 (同类自动联动全选/取消)
-        boolean isChestGroup = lowerId.contains("chest") || lowerId.contains("barrel") || lowerId.contains("shulker")
-                || lowerId.contains("lootr") || lowerId.contains("storage") || lowerId.contains("box")
-                || lowerName.contains("箱") || lowerName.contains("宝箱");
-
-        // 2. 判断是否为【矿石/残骸类】组
-        boolean isOreGroup = lowerId.contains("ore") || lowerId.contains("debris") || lowerName.contains("矿");
-
-        // 3. 判断是否为【僵尸/敌对怪类】组
-        boolean isMonsterGroup = lowerId.contains("zombie") || lowerId.contains("skeleton") || lowerId.contains("creeper")
-                || lowerId.contains("mimic") || lowerName.contains("僵尸") || lowerName.contains("骷髅")
-                || lowerName.contains("苦力怕") || lowerName.contains("宝箱怪");
-
-        if (isChestGroup) {
-            // 联动全选/取消全图所有箱子类与宝箱怪
-            enableAllChestsAndMimicsGroup(track, color);
-        } else if (isOreGroup) {
-            enableAllOresGroup(track, color);
-        } else if (isMonsterGroup) {
-            enableAllMonstersGroup(track, color);
-        } else {
-            // 普通单个目标设置
-            if (item.category == 0) TrackerConfig.toggleEntity(item.id, track, color);
-            else if (item.category == 1) TrackerConfig.toggleBlock(item.id, track, color);
-            else TrackerConfig.toggleItem(item.id, track, color);
-        }
+    private void setTracked(TargetItem item, boolean track, int color) {
+        if (item.category == 0) TrackerConfig.toggleEntity(item.id, track, color);
+        else if (item.category == 1) TrackerConfig.toggleBlock(item.id, track, color);
+        else TrackerConfig.toggleItem(item.id, track, color);
         TrackerConfig.saveConfig();
-    }
-
-    private void enableAllChestsAndMimicsGroup(boolean track, int color) {
-        String[] mimics = {
-                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic"
-        };
-        for (String id : mimics) {
-            TrackerConfig.toggleEntity(id, track, color);
-        }
-
-        String[] chests = {
-                "minecraft:chest", "minecraft:trapped_chest", "minecraft:ender_chest", "minecraft:barrel",
-                "lootr:lootr_chest", "lootr:lootr_trapped_chest", "lootr:lootr_barrel", "lootr:lootr_inventory",
-                "sophisticatedstorage:chest", "sophisticatedstorage:barrel",
-                "aquamirae:frozen_chest", "avaritia:compressed_chest"
-        };
-        for (String id : chests) {
-            TrackerConfig.toggleBlock(id, track, color);
-        }
-    }
-
-    private void enableAllOresGroup(boolean track, int color) {
-        String[] ores = {
-                "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore",
-                "minecraft:ancient_debris", "minecraft:spawner",
-                "minecraft:emerald_ore", "minecraft:deepslate_emerald_ore",
-                "minecraft:gold_ore", "minecraft:deepslate_gold_ore",
-                "minecraft:iron_ore", "minecraft:deepslate_iron_ore"
-        };
-        for (String id : ores) {
-            TrackerConfig.toggleBlock(id, track, color);
-        }
-    }
-
-    private void enableAllMonstersGroup(boolean track, int color) {
-        String[] hostiles = {
-                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic",
-                "minecraft:zombie", "minecraft:skeleton", "minecraft:creeper", "minecraft:spider",
-                "minecraft:enderman", "minecraft:witch", "minecraft:phantom", "minecraft:drowned",
-                "minecraft:husk", "minecraft:stray", "minecraft:wither_skeleton", "minecraft:blaze",
-                "minecraft:ghast", "minecraft:ender_dragon", "minecraft:wither"
-        };
-        for (String id : hostiles) {
-            TrackerConfig.toggleEntity(id, track, color);
-        }
     }
 
     @Override
