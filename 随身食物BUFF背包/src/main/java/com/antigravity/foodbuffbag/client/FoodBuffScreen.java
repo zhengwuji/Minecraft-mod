@@ -31,6 +31,8 @@ public class FoodBuffScreen extends AbstractContainerScreen<FoodBuffMenu> {
         super(menu, playerInventory, title);
         this.imageWidth = 176;
         this.imageHeight = 222;
+        this.titleLabelX = 8;
+        this.titleLabelY = 6;
         this.inventoryLabelY = this.imageHeight - 94;
     }
 
@@ -40,31 +42,31 @@ public class FoodBuffScreen extends AbstractContainerScreen<FoodBuffMenu> {
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
 
-        // 1. 翻页按钮 [ < ]
+        // 1. 翻页按钮 [ < ] (x + 65)
         this.prevPageBtn = Button.builder(Component.literal("<"), (btn) -> {
             if (this.menu.getCurrentPage() > 0) {
                 NetworkHandler.CHANNEL.sendToServer(new PacketChangePage(-1));
                 this.menu.changePage(-1);
             }
         })
-        .bounds(x + 104, y + 4, 14, 12)
+        .bounds(x + 65, y + 3, 14, 12)
         .build();
 
-        // 2. 翻页按钮 [ > ]
+        // 2. 翻页按钮 [ > ] (x + 115)
         this.nextPageBtn = Button.builder(Component.literal(">"), (btn) -> {
             if (this.menu.getCurrentPage() < FoodBuffProvider.MAX_PAGES - 1) {
                 NetworkHandler.CHANNEL.sendToServer(new PacketChangePage(1));
                 this.menu.changePage(1);
             }
         })
-        .bounds(x + 134, y + 4, 14, 12)
+        .bounds(x + 115, y + 3, 14, 12)
         .build();
 
-        // 3. [一键存入] 快速归仓按钮
+        // 3. [存入] 快速归仓按钮 (x + 132, 宽度 36)
         this.quickDepositBtn = Button.builder(Component.translatable("tooltip.foodbuffbag.quick_deposit"), (btn) -> {
             NetworkHandler.CHANNEL.sendToServer(new PacketQuickDeposit());
         })
-        .bounds(x + 150, y + 4, 22, 12)
+        .bounds(x + 132, y + 3, 36, 12)
         .tooltip(Tooltip.create(Component.translatable("tooltip.foodbuffbag.quick_deposit_desc")))
         .build();
 
@@ -79,9 +81,9 @@ public class FoodBuffScreen extends AbstractContainerScreen<FoodBuffMenu> {
         int y = (this.height - this.imageHeight) / 2;
         guiGraphics.blit(CONTAINER_BACKGROUND, x, y, 0, 0, this.imageWidth, this.imageHeight);
 
-        // 渲染当前页码，如 "1/100"
+        // 渲染当前页码，如 "1/100" (精确居中于 < 与 > 按钮之间 x+97 位置)
         String pageText = (this.menu.getCurrentPage() + 1) + "/" + FoodBuffProvider.MAX_PAGES;
-        guiGraphics.drawString(this.font, pageText, x + 120 - this.font.width(pageText) / 2, y + 6, 0x404040, false);
+        guiGraphics.drawString(this.font, pageText, x + 97 - this.font.width(pageText) / 2, y + 5, 0x404040, false);
     }
 
     @Override
@@ -89,11 +91,11 @@ public class FoodBuffScreen extends AbstractContainerScreen<FoodBuffMenu> {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
 
-        // 在标题区绘制 [🌟 激活BUFF] 状态提示点
+        // 在标题右侧精准绘制 [🌟] BUFF 提示图标 (x + 48)，绝不与标题或按钮打架
         int x = (this.width - this.imageWidth) / 2;
         int y = (this.height - this.imageHeight) / 2;
-        int starX = x + 85;
-        int starY = y + 6;
+        int starX = x + 48;
+        int starY = y + 5;
 
         guiGraphics.drawString(this.font, "🌟", starX, starY, 0xFFD700, false);
 

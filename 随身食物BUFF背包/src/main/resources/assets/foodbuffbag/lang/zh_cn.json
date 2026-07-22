@@ -1,6 +1,6 @@
 {
-  "container.foodbuffbag.food_bag": "随身食物与附魔装备BUFF背包",
-  "tooltip.foodbuffbag.open_bag": "打开随身食物与附魔装备BUFF背包",
+  "container.foodbuffbag.food_bag": "随身BUFF仓",
+  "tooltip.foodbuffbag.open_bag": "打开随身装备与食物BUFF仓",
   "tooltip.foodbuffbag.quick_deposit": "存入",
   "tooltip.foodbuffbag.quick_deposit_desc": "一键将玩家背包内的所有食物及附魔装备自动存入仓库",
   "tooltip.foodbuffbag.buff_overview": "§6🌟 随身装备与食物仓 - 激活的永久BUFF总览",
