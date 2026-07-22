@@ -15,9 +15,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class DevHelperScreen extends Screen {
     private EditBox searchBox;
@@ -36,14 +34,35 @@ public class DevHelperScreen extends Screen {
     private String statusMessage = "";
     private long statusTimer = 0;
 
+    // 内置常见与模组属性中文对照字典
+    private static final Map<String, String> CHINESE_MAP = Map.ofEntries(
+            Map.entry("minecraft:generic.max_health", "❤️ 最大生命值"),
+            Map.entry("minecraft:generic.knockback_resistance", "🛡️ 击退抗性"),
+            Map.entry("minecraft:generic.movement_speed", "⚡ 移动速度"),
+            Map.entry("minecraft:generic.flying_speed", "🕊️ 飞行速度"),
+            Map.entry("minecraft:generic.attack_damage", "⚔️ 近战伤害"),
+            Map.entry("minecraft:generic.attack_knockback", "🔨 击退强度"),
+            Map.entry("minecraft:generic.attack_speed", "🗡️ 攻击速度"),
+            Map.entry("minecraft:generic.armor", "🛡️ 护甲值"),
+            Map.entry("minecraft:generic.armor_toughness", "🥷 盔甲韧性"),
+            Map.entry("minecraft:generic.luck", "🍀 幸运值"),
+            Map.entry("forge:block_reach", "📏 方块挖掘范围"),
+            Map.entry("forge:entity_reach", "🗡️ 实体攻击距离"),
+            Map.entry("forge:swim_speed", "🏊 游泳速度"),
+            Map.entry("forge:nametag_distance", "🏷️ 名牌距离"),
+            Map.entry("forge:step_height_addition", "🪜 自动台阶高度")
+    );
+
     public static class AttributeItem {
         public final String id;
+        public final String chineseName;
         public final Attribute attribute;
         public final double currentValue;
         public final double baseValue;
 
-        public AttributeItem(String id, Attribute attribute, double currentValue, double baseValue) {
+        public AttributeItem(String id, String chineseName, Attribute attribute, double currentValue, double baseValue) {
             this.id = id;
+            this.chineseName = chineseName;
             this.attribute = attribute;
             this.currentValue = currentValue;
             this.baseValue = baseValue;
@@ -51,7 +70,7 @@ public class DevHelperScreen extends Screen {
     }
 
     public DevHelperScreen() {
-        super(Component.translatable("gui.devhelper.title"));
+        super(Component.literal("🛠️ 开发者辅助"));
     }
 
     @Override
@@ -60,45 +79,45 @@ public class DevHelperScreen extends Screen {
         refreshAttributeList();
 
         int centerX = this.width / 2;
-        int guiLeft = centerX - 190;
-        int guiTop = 20;
+        int guiLeft = centerX - 195;
+        int guiTop = 15;
 
-        // 页签切换按钮
-        this.addRenderableWidget(Button.builder(Component.literal("全模组属性修改"), btn -> {
+        // 页签切换按钮：定位在标题右侧，避免重叠
+        this.addRenderableWidget(Button.builder(Component.literal("全模组属性"), btn -> {
             this.activeTab = 0;
             rebuildWidgets();
-        }).bounds(guiLeft, guiTop + 5, 120, 20).build());
+        }).bounds(guiLeft + 180, guiTop + 5, 95, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("玩家基础快捷状态"), btn -> {
+        this.addRenderableWidget(Button.builder(Component.literal("玩家状态"), btn -> {
             this.activeTab = 1;
             rebuildWidgets();
-        }).bounds(guiLeft + 125, guiTop + 5, 120, 20).build());
+        }).bounds(guiLeft + 280, guiTop + 5, 95, 20).build());
 
         if (this.activeTab == 0) {
             // 搜索框
-            this.searchBox = new EditBox(this.font, guiLeft + 10, guiTop + 32, 360, 18, Component.literal("Search"));
-            this.searchBox.setHint(Component.translatable("gui.devhelper.search"));
+            this.searchBox = new EditBox(this.font, guiLeft + 10, guiTop + 32, 370, 18, Component.literal("Search"));
+            this.searchBox.setHint(Component.literal("🔍 搜索中文含义或注册ID (如 生命, 护甲, luck)..."));
             this.searchBox.setResponder(text -> filterList());
             this.addRenderableWidget(this.searchBox);
 
             // 修改数值输入框与按钮
-            this.valueInputBox = new EditBox(this.font, guiLeft + 10, guiTop + 205, 100, 18, Component.literal("Value"));
+            this.valueInputBox = new EditBox(this.font, guiLeft + 10, guiTop + 208, 90, 18, Component.literal("Value"));
             this.addRenderableWidget(this.valueInputBox);
 
             this.addRenderableWidget(Button.builder(Component.literal("应用设定"), btn -> applyValue())
-                    .bounds(guiLeft + 115, guiTop + 204, 65, 20).build());
+                    .bounds(guiLeft + 105, guiTop + 207, 65, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("+10"), btn -> addValue(10))
-                    .bounds(guiLeft + 185, guiTop + 204, 40, 20).build());
+                    .bounds(guiLeft + 175, guiTop + 207, 40, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("+100"), btn -> addValue(100))
-                    .bounds(guiLeft + 230, guiTop + 204, 45, 20).build());
+                    .bounds(guiLeft + 220, guiTop + 207, 45, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("1000"), btn -> setValueDirectly(1000))
-                    .bounds(guiLeft + 280, guiTop + 204, 45, 20).build());
+                    .bounds(guiLeft + 270, guiTop + 207, 45, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("重置默认"), btn -> resetDefaultValue())
-                    .bounds(guiLeft + 330, guiTop + 204, 50, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal("重置"), btn -> resetDefaultValue())
+                    .bounds(guiLeft + 320, guiTop + 207, 45, 20).build());
         } else {
             // 玩家基础状态页签按钮
             this.addRenderableWidget(Button.builder(Component.literal("一键回复满血满饱食度"), btn -> {
@@ -138,18 +157,38 @@ public class DevHelperScreen extends Screen {
             if (attribute != null) {
                 AttributeInstance inst = player.getAttribute(attribute);
                 if (inst != null) {
-                    allAttributes.add(new AttributeItem(loc.toString(), attribute, inst.getValue(), inst.getBaseValue()));
+                    String fullId = loc.toString();
+                    String cnName = getAttributeChineseName(fullId, attribute);
+                    allAttributes.add(new AttributeItem(fullId, cnName, attribute, inst.getValue(), inst.getBaseValue()));
                 }
             }
         }
         filterList();
     }
 
+    private String getAttributeChineseName(String fullId, Attribute attribute) {
+        if (CHINESE_MAP.containsKey(fullId)) {
+            return CHINESE_MAP.get(fullId);
+        }
+        // 尝试从语言文件中读取原生的中文名称
+        try {
+            Component nameComp = Component.translatable(attribute.getDescriptionId());
+            String text = nameComp.getString();
+            if (!text.isEmpty() && !text.equals(attribute.getDescriptionId())) {
+                return text;
+            }
+        } catch (Exception ignored) {}
+
+        // Fallback 后备提取
+        String path = fullId.contains(":") ? fullId.split(":")[1] : fullId;
+        return path.replace("generic.", "").replace("player.", "").replace("_", " ");
+    }
+
     private void filterList() {
         filteredAttributes.clear();
         String query = searchBox != null ? searchBox.getValue().toLowerCase(Locale.ROOT).trim() : "";
         for (AttributeItem item : allAttributes) {
-            if (query.isEmpty() || item.id.toLowerCase(Locale.ROOT).contains(query)) {
+            if (query.isEmpty() || item.id.toLowerCase(Locale.ROOT).contains(query) || item.chineseName.toLowerCase(Locale.ROOT).contains(query)) {
                 filteredAttributes.add(item);
             }
         }
@@ -161,7 +200,7 @@ public class DevHelperScreen extends Screen {
         try {
             double val = Double.parseDouble(valueInputBox.getValue());
             DevHelperNetwork.CHANNEL.sendToServer(new C2SUpdateAttributePacket(selectedAttribute.id, val));
-            showStatus("已成功向服务端提交 " + selectedAttribute.id + " -> " + val);
+            showStatus("已提交 " + selectedAttribute.chineseName + " -> " + val);
             refreshAttributeList();
         } catch (NumberFormatException e) {
             showStatus("请输入有效的数值！");
@@ -210,8 +249,8 @@ public class DevHelperScreen extends Screen {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         int centerX = this.width / 2;
-        int guiLeft = centerX - 190;
-        int guiTop = 20;
+        int guiLeft = centerX - 195;
+        int guiTop = 15;
 
         if (this.activeTab == 0 && button == 0) {
             int listTop = guiTop + 55;
@@ -219,7 +258,7 @@ public class DevHelperScreen extends Screen {
                 int index = scrollOffset + i;
                 if (index >= filteredAttributes.size()) break;
                 int itemY = listTop + i * ITEM_HEIGHT;
-                if (mouseX >= guiLeft + 10 && mouseX <= guiLeft + 370 && mouseY >= itemY && mouseY <= itemY + ITEM_HEIGHT - 2) {
+                if (mouseX >= guiLeft + 10 && mouseX <= guiLeft + 380 && mouseY >= itemY && mouseY <= itemY + ITEM_HEIGHT - 2) {
                     this.selectedAttribute = filteredAttributes.get(index);
                     if (this.valueInputBox != null) {
                         this.valueInputBox.setValue(String.format(Locale.ROOT, "%.2f", selectedAttribute.baseValue));
@@ -237,22 +276,22 @@ public class DevHelperScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
-        int guiLeft = centerX - 190;
-        int guiTop = 20;
+        int guiLeft = centerX - 195;
+        int guiTop = 15;
 
-        // 背景深色主面板
-        graphics.fill(guiLeft, guiTop, guiLeft + 380, guiTop + 235, 0xEE1A1A24);
-        graphics.renderOutline(guiLeft, guiTop, 380, 235, 0xFF3D3D56);
+        // 背景深色主面板 (390 x 240)
+        graphics.fill(guiLeft, guiTop, guiLeft + 390, guiTop + 240, 0xF0181822);
+        graphics.renderOutline(guiLeft, guiTop, 390, 240, 0xFF4A4A66);
 
-        // 标题
-        graphics.drawString(this.font, this.title, guiLeft + 10, guiTop + 10, 0xFFFFFF);
+        // 标题 (独立定位在左上角，绝对不与右侧的页签按钮打架重叠)
+        graphics.drawString(this.font, Component.literal("🛠️ 开发者辅助"), guiLeft + 12, guiTop + 10, 0xFFFFFF);
 
         if (this.activeTab == 0) {
             // 绘制属性列表区域背景
             int listTop = guiTop + 55;
             int listHeight = VISIBLE_ITEMS * ITEM_HEIGHT;
-            graphics.fill(guiLeft + 8, listTop - 2, guiLeft + 372, listTop + listHeight + 2, 0xFF101018);
-            graphics.renderOutline(guiLeft + 8, listTop - 2, 364, listHeight + 4, 0xFF2E2E40);
+            graphics.fill(guiLeft + 8, listTop - 2, guiLeft + 382, listTop + listHeight + 2, 0xFF101018);
+            graphics.renderOutline(guiLeft + 8, listTop - 2, 374, listHeight + 4, 0xFF2E2E40);
 
             for (int i = 0; i < VISIBLE_ITEMS; i++) {
                 int index = scrollOffset + i;
@@ -262,28 +301,28 @@ public class DevHelperScreen extends Screen {
                 int itemY = listTop + i * ITEM_HEIGHT;
                 boolean isSelected = (selectedAttribute != null && selectedAttribute.id.equals(item.id));
 
-                int bgColor = isSelected ? 0xFF2A3F66 : (i % 2 == 0 ? 0xFF161622 : 0xFF1A1A2A);
-                graphics.fill(guiLeft + 10, itemY, guiLeft + 370, itemY + ITEM_HEIGHT - 2, bgColor);
+                int bgColor = isSelected ? 0xFF2F4575 : (i % 2 == 0 ? 0xFF161622 : 0xFF1B1B2B);
+                graphics.fill(guiLeft + 10, itemY, guiLeft + 380, itemY + ITEM_HEIGHT - 2, bgColor);
 
-                // 显示 ID 与数值
-                String displayId = item.id;
-                if (displayId.length() > 32) displayId = displayId.substring(0, 30) + "..";
+                // 显示【中文名称】与 ID
+                String titleText = item.chineseName + "  (" + item.id + ")";
+                if (titleText.length() > 36) titleText = titleText.substring(0, 34) + "..";
 
-                graphics.drawString(this.font, displayId, guiLeft + 15, itemY + 6, isSelected ? 0xFFFF55 : 0xDDDDDD);
+                graphics.drawString(this.font, titleText, guiLeft + 15, itemY + 6, isSelected ? 0xFFFF55 : 0xE0E0E0);
                 String valStr = String.format(Locale.ROOT, "生效:%.1f | 基址:%.1f", item.currentValue, item.baseValue);
-                graphics.drawString(this.font, valStr, guiLeft + 225, itemY + 6, 0x55FF55);
+                graphics.drawString(this.font, valStr, guiLeft + 235, itemY + 6, 0x55FF55);
             }
 
-            // 滚动提示
+            // 滚动条提示信息
             if (filteredAttributes.size() > VISIBLE_ITEMS) {
                 String scrollInfo = (scrollOffset + 1) + "-" + Math.min(scrollOffset + VISIBLE_ITEMS, filteredAttributes.size()) + " / " + filteredAttributes.size();
-                graphics.drawString(this.font, scrollInfo, guiLeft + 300, guiTop + 36, 0x888888);
+                graphics.drawString(this.font, scrollInfo, guiLeft + 310, guiTop + 36, 0x888888);
             }
         }
 
         // 显示状态通知消息
         if (System.currentTimeMillis() < this.statusTimer) {
-            graphics.drawString(this.font, this.statusMessage, guiLeft + 15, guiTop + 220, 0x55FF55);
+            graphics.drawString(this.font, this.statusMessage, guiLeft + 15, guiTop + 228, 0x55FF55);
         }
     }
 
