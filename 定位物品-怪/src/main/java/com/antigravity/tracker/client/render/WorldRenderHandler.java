@@ -29,18 +29,140 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Matrix4f;
 
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Mod.EventBusSubscriber(modid = ItemEntityTracker.MODID, value = Dist.CLIENT)
 public class WorldRenderHandler {
+
+    public static class BlockTarget {
+        public final BlockPos pos;
+        public final Block block;
+        public final String id;
+
+        public BlockTarget(BlockPos pos, Block block, String id) {
+            this.pos = pos;
+            this.block = block;
+            this.id = id;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            BlockTarget that = (BlockTarget) o;
+            return Objects.equals(pos, that.pos);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(pos);
+        }
+    }
+
+    private static final List<BlockTarget> CACHED_BLOCK_TARGETS = new ArrayList<>();
+    private static boolean isScanning = false;
+    private static int tickCounter = 0;
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+        if (!TrackerConfig.enabled || TrackerConfig.trackedBlocks.isEmpty()) return;
+
+        tickCounter++;
+        // 每 10 个 Tick (0.5 秒) 执行一次异步区块扫描，确保零卡顿与 60+ FPS 极限流畅
+        if (tickCounter % 10 == 0 && !isScanning) {
+            Minecraft mc = Minecraft.getInstance();
+            Player player = mc.player;
+            ClientLevel level = mc.level;
+            if (player != null && level != null) {
+                isScanning = true;
+                BlockPos pPos = player.blockPosition();
+                double maxDist = TrackerConfig.maxDistance;
+
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        List<BlockTarget> newTargets = new ArrayList<>();
+                        Set<BlockPos> foundPositions = new HashSet<>();
+
+                        int pChunkX = pPos.getX() >> 4;
+                        int pChunkZ = pPos.getZ() >> 4;
+                        int chunkRadius = (int) Math.min(Math.ceil(maxDist / 16.0), 16);
+
+                        for (int cx = pChunkX - chunkRadius; cx <= pChunkX + chunkRadius; cx++) {
+                            for (int cz = pChunkZ - chunkRadius; cz <= pChunkZ + chunkRadius; cz++) {
+                                LevelChunk chunk = level.getChunkSource().getChunk(cx, cz, false);
+                                if (chunk == null) continue;
+
+                                // A. 扫描 BlockEntity (全模组箱子、Lootr战利品箱、木桶、刷怪笼、精妙背包等)
+                                for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
+                                    BlockPos bPos = entry.getKey();
+                                    if (bPos.distSqr(pPos) > maxDist * maxDist) continue;
+
+                                    BlockState state = entry.getValue().getBlockState();
+                                    Block block = state.getBlock();
+                                    ResourceLocation bLoc = ForgeRegistries.BLOCKS.getKey(block);
+                                    if (bLoc != null) {
+                                        String bId = bLoc.toString();
+                                        if (isBlockTracked(bId, block, state)) {
+                                            if (foundPositions.add(bPos)) {
+                                                newTargets.add(new BlockTarget(bPos, block, bId));
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // B. 扫描区块 Sub-Sections (普通矿石、远古残骸等)
+                                LevelChunkSection[] sections = chunk.getSections();
+                                for (int sIdx = 0; sIdx < sections.length; sIdx++) {
+                                    LevelChunkSection section = sections[sIdx];
+                                    if (section == null || section.hasOnlyAir()) continue;
+
+                                    int sectionMinY = level.getMinBuildHeight() + sIdx * 16;
+                                    for (int x = 0; x < 16; x++) {
+                                        for (int y = 0; y < 16; y++) {
+                                            for (int z = 0; z < 16; z++) {
+                                                BlockState state = section.getBlockState(x, y, z);
+                                                if (state.isAir()) continue;
+
+                                                Block block = state.getBlock();
+                                                ResourceLocation bLoc = ForgeRegistries.BLOCKS.getKey(block);
+                                                if (bLoc != null) {
+                                                    String bId = bLoc.toString();
+                                                    if (isBlockTracked(bId, block, state)) {
+                                                        BlockPos bPos = new BlockPos((cx << 4) + x, sectionMinY + y, (cz << 4) + z);
+                                                        if (bPos.distSqr(pPos) <= maxDist * maxDist) {
+                                                            if (foundPositions.add(bPos)) {
+                                                                newTargets.add(new BlockTarget(bPos, block, bId));
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        synchronized (CACHED_BLOCK_TARGETS) {
+                            CACHED_BLOCK_TARGETS.clear();
+                            CACHED_BLOCK_TARGETS.addAll(newTargets);
+                        }
+                    } catch (Exception ignored) {
+                    } finally {
+                        isScanning = false;
+                    }
+                });
+            }
+        }
+    }
 
     @SubscribeEvent
     public static void onRenderWorld(RenderLevelStageEvent event) {
@@ -107,80 +229,23 @@ public class WorldRenderHandler {
             }
         }
 
-        // 2. 高性能 X-Ray 级全区块方块与宝箱扫描器
-        if (!TrackerConfig.trackedBlocks.isEmpty()) {
-            scanAndRenderXRayBlocks(level, player, camPos, poseStack, linesConsumer, bufferSource, mc.font);
+        // 2. 渲染缓存的 X-Ray 级方块/宝箱目标 (0 延迟极速渲染)
+        synchronized (CACHED_BLOCK_TARGETS) {
+            BlockPos pPos = player.blockPosition();
+            double maxDistSq = TrackerConfig.maxDistance * TrackerConfig.maxDistance;
+
+            for (BlockTarget target : CACHED_BLOCK_TARGETS) {
+                BlockPos bPos = target.pos;
+                double distSq = bPos.distSqr(pPos);
+                if (distSq <= maxDistSq) {
+                    renderBlockTarget(poseStack, linesConsumer, bufferSource, mc.font, camPos, bPos, target.block, target.id, Math.sqrt(distSq));
+                }
+            }
         }
 
         bufferSource.endBatch(RenderType.lines());
         RenderSystem.enableDepthTest();
         RenderSystem.lineWidth(1.0F);
-    }
-
-    private static void scanAndRenderXRayBlocks(ClientLevel level, Player player, Vec3 camPos, PoseStack poseStack, VertexConsumer linesConsumer, MultiBufferSource.BufferSource bufferSource, Font font) {
-        BlockPos pPos = player.blockPosition();
-        int pChunkX = pPos.getX() >> 4;
-        int pChunkZ = pPos.getZ() >> 4;
-        int chunkRadius = (int) Math.min(Math.ceil(TrackerConfig.maxDistance / 16.0), 16);
-
-        Set<BlockPos> renderedPositions = new HashSet<>();
-
-        for (int cx = pChunkX - chunkRadius; cx <= pChunkX + chunkRadius; cx++) {
-            for (int cz = pChunkZ - chunkRadius; cz <= pChunkZ + chunkRadius; cz++) {
-                LevelChunk chunk = level.getChunkSource().getChunk(cx, cz, false);
-                if (chunk == null) continue;
-
-                // A. 扫描 BlockEntity (全模组箱子、Lootr战利品箱、木桶、刷怪笼、精妙背包等，100%覆盖)
-                for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
-                    BlockPos bPos = entry.getKey();
-                    double distSq = bPos.distSqr(pPos);
-                    if (distSq > TrackerConfig.maxDistance * TrackerConfig.maxDistance) continue;
-
-                    BlockState state = entry.getValue().getBlockState();
-                    Block block = state.getBlock();
-                    ResourceLocation bLoc = ForgeRegistries.BLOCKS.getKey(block);
-                    if (bLoc != null) {
-                        String bId = bLoc.toString();
-                        if (isBlockTracked(bId, block, state)) {
-                            renderedPositions.add(bPos);
-                            renderBlockTarget(poseStack, linesConsumer, bufferSource, font, camPos, bPos, block, bId, Math.sqrt(distSq));
-                        }
-                    }
-                }
-
-                // B. 扫描区块 Sub-Sections (普通钻石矿石、远古残骸、非 BlockEntity 箱子)
-                LevelChunkSection[] sections = chunk.getSections();
-                for (int sIdx = 0; sIdx < sections.length; sIdx++) {
-                    LevelChunkSection section = sections[sIdx];
-                    if (section == null || section.hasOnlyAir()) continue;
-
-                    int sectionMinY = level.getMinBuildHeight() + sIdx * 16;
-                    for (int x = 0; x < 16; x++) {
-                        for (int y = 0; y < 16; y++) {
-                            for (int z = 0; z < 16; z++) {
-                                BlockState state = section.getBlockState(x, y, z);
-                                if (state.isAir()) continue;
-
-                                Block block = state.getBlock();
-                                ResourceLocation bLoc = ForgeRegistries.BLOCKS.getKey(block);
-                                if (bLoc != null) {
-                                    String bId = bLoc.toString();
-                                    if (isBlockTracked(bId, block, state)) {
-                                        BlockPos bPos = new BlockPos((cx << 4) + x, sectionMinY + y, (cz << 4) + z);
-                                        if (renderedPositions.add(bPos)) {
-                                            double distSq = bPos.distSqr(pPos);
-                                            if (distSq <= TrackerConfig.maxDistance * TrackerConfig.maxDistance) {
-                                                renderBlockTarget(poseStack, linesConsumer, bufferSource, font, camPos, bPos, block, bId, Math.sqrt(distSq));
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 
     private static void renderBlockTarget(PoseStack poseStack, VertexConsumer linesConsumer, MultiBufferSource.BufferSource bufferSource, Font font, Vec3 camPos, BlockPos bPos, Block block, String bId, double dist) {

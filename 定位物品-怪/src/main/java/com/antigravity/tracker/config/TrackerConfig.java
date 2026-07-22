@@ -1,11 +1,21 @@
 package com.antigravity.tracker.config;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.minecraftforge.fml.loading.FMLPaths;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
 public class TrackerConfig {
     public static boolean enabled = true;
-    public static double maxDistance = 1000.0; // 默认 1000 米无限制
+    public static double maxDistance = 1000.0; // 默认 1000 米
     public static boolean showTracers = true;
     public static boolean showDistanceText = true;
 
@@ -30,6 +40,8 @@ public class TrackerConfig {
             "🔴 红色", "🟢 绿色", "🔵 蓝色", "🟡 黄色", "🟣 紫色", "🩵 青色", "🟠 橙色", "⚪ 白色"
     };
 
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
     static {
         // 默认初始化预设常用目标
         trackedEntities.put("artifacts:mimic", 0xFFFF0000);         // 宝箱怪 -> 红色
@@ -40,13 +52,91 @@ public class TrackerConfig {
         trackedEntities.put("minecraft:creeper", 0xFFFF8800);        // 苦力怕 -> 橙色
         trackedEntities.put("minecraft:ender_dragon", 0xFFBB00FF);    // 末影龙 -> 紫色
 
+        trackedBlocks.put("minecraft:chest", 0xFFFFFF00);             // 宝箱 -> 黄色
+        trackedBlocks.put("lootr:lootr_chest", 0xFFFFFF00);
         trackedBlocks.put("minecraft:diamond_ore", 0xFF00FFFF);       // 钻石矿石 -> 青色
         trackedBlocks.put("minecraft:deepslate_diamond_ore", 0xFF00FFFF);
         trackedBlocks.put("minecraft:ancient_debris", 0xFFFFFF00);    // 远古残骸 -> 黄色
-        trackedBlocks.put("minecraft:chest", 0xFFFFFF00);             // 宝箱 -> 黄色
 
         trackedItems.put("minecraft:diamond", 0xFF00FFFF);           // 钻石掉落物 -> 青色
         trackedItems.put("minecraft:netherite_ingot", 0xFFBB00FF);   // 下界合金锭 -> 紫色
+
+        loadConfig();
+    }
+
+    public static File getConfigFile() {
+        try {
+            Path configPath = FMLPaths.CONFIGDIR.get();
+            return configPath.resolve("itementitytracker-client.json").toFile();
+        } catch (Exception e) {
+            return new File("config/itementitytracker-client.json");
+        }
+    }
+
+    public static synchronized void loadConfig() {
+        File file = getConfigFile();
+        if (!file.exists()) return;
+
+        try (FileReader reader = new FileReader(file)) {
+            JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+            if (json.has("enabled")) enabled = json.get("enabled").getAsBoolean();
+            if (json.has("maxDistance")) maxDistance = json.get("maxDistance").getAsDouble();
+            if (json.has("showTracers")) showTracers = json.get("showTracers").getAsBoolean();
+            if (json.has("showDistanceText")) showDistanceText = json.get("showDistanceText").getAsBoolean();
+
+            if (json.has("trackedEntities")) {
+                trackedEntities.clear();
+                JsonObject obj = json.getAsJsonObject("trackedEntities");
+                obj.entrySet().forEach(entry -> trackedEntities.put(entry.getKey(), entry.getValue().getAsInt()));
+            }
+
+            if (json.has("trackedBlocks")) {
+                trackedBlocks.clear();
+                JsonObject obj = json.getAsJsonObject("trackedBlocks");
+                obj.entrySet().forEach(entry -> trackedBlocks.put(entry.getKey(), entry.getValue().getAsInt()));
+            }
+
+            if (json.has("trackedItems")) {
+                trackedItems.clear();
+                JsonObject obj = json.getAsJsonObject("trackedItems");
+                obj.entrySet().forEach(entry -> trackedItems.put(entry.getKey(), entry.getValue().getAsInt()));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static synchronized void saveConfig() {
+        try {
+            File file = getConfigFile();
+            if (file.getParentFile() != null && !file.getParentFile().exists()) {
+                file.getParentFile().mkdirs();
+            }
+
+            JsonObject json = new JsonObject();
+            json.addProperty("enabled", enabled);
+            json.addProperty("maxDistance", maxDistance);
+            json.addProperty("showTracers", showTracers);
+            json.addProperty("showDistanceText", showDistanceText);
+
+            JsonObject entitiesObj = new JsonObject();
+            trackedEntities.forEach(entitiesObj::addProperty);
+            json.add("trackedEntities", entitiesObj);
+
+            JsonObject blocksObj = new JsonObject();
+            trackedBlocks.forEach(blocksObj::addProperty);
+            json.add("trackedBlocks", blocksObj);
+
+            JsonObject itemsObj = new JsonObject();
+            trackedItems.forEach(itemsObj::addProperty);
+            json.add("trackedItems", itemsObj);
+
+            try (FileWriter writer = new FileWriter(file)) {
+                GSON.toJson(json, writer);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static int getEntityColor(String id) {
@@ -67,6 +157,7 @@ public class TrackerConfig {
         } else {
             trackedEntities.remove(id);
         }
+        saveConfig();
     }
 
     public static void toggleBlock(String id, boolean track, int color) {
@@ -75,6 +166,7 @@ public class TrackerConfig {
         } else {
             trackedBlocks.remove(id);
         }
+        saveConfig();
     }
 
     public static void toggleItem(String id, boolean track, int color) {
@@ -83,6 +175,7 @@ public class TrackerConfig {
         } else {
             trackedItems.remove(id);
         }
+        saveConfig();
     }
 
     public static int getNextColor(int currentColor) {
