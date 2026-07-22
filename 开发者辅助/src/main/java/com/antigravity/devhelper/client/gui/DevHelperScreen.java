@@ -114,7 +114,7 @@ public class DevHelperScreen extends Screen {
         int guiLeft = centerX - 195;
         int guiTop = 15;
 
-        // 页签切换按钮：定位在标题右侧，避免重叠
+        // 页签切换按钮
         this.addRenderableWidget(Button.builder(Component.literal("全模组属性与技能"), btn -> {
             this.activeTab = 0;
             rebuildWidgets();
@@ -126,30 +126,35 @@ public class DevHelperScreen extends Screen {
         }).bounds(guiLeft + 280, guiTop + 5, 95, 20).build());
 
         if (this.activeTab == 0) {
-            // 搜索框
+            // 搜索框：设置醒目无极限字符长度
             this.searchBox = new EditBox(this.font, guiLeft + 10, guiTop + 32, 370, 18, Component.literal("Search"));
-            this.searchBox.setHint(Component.literal("🔍 搜索 钓鱼, 战斗, 飞行, 生命, 护甲, luck..."));
+            this.searchBox.setMaxLength(100);
+            this.searchBox.setHint(Component.literal("🔍 输入任意名称或数字 (如 钓鱼, 1000, 生命, 护甲, luck)..."));
+            this.searchBox.setTextColor(0xFFFFFF);
             this.searchBox.setResponder(text -> filterList());
             this.addRenderableWidget(this.searchBox);
 
-            // 修改数值输入框与按钮
-            this.valueInputBox = new EditBox(this.font, guiLeft + 10, guiTop + 208, 90, 18, Component.literal("Value"));
+            // 修改数值输入框：扩展宽度，支持输入任意超大数字（如 10000, 999999 等）
+            this.valueInputBox = new EditBox(this.font, guiLeft + 10, guiTop + 208, 110, 18, Component.literal("Value"));
+            this.valueInputBox.setMaxLength(20);
+            this.valueInputBox.setTextColor(0xFFFFFF);
             this.addRenderableWidget(this.valueInputBox);
 
+            // 升级版快捷修改按钮行：全面支持超高等级
             this.addRenderableWidget(Button.builder(Component.literal("应用设定"), btn -> applyValue())
-                    .bounds(guiLeft + 105, guiTop + 207, 65, 20).build());
+                    .bounds(guiLeft + 125, guiTop + 207, 60, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("+10"), btn -> addValue(10))
-                    .bounds(guiLeft + 175, guiTop + 207, 40, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal("+1000"), btn -> addValue(1000))
+                    .bounds(guiLeft + 190, guiTop + 207, 45, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("+100"), btn -> addValue(100))
-                    .bounds(guiLeft + 220, guiTop + 207, 45, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal("1万级"), btn -> setValueDirectly(10000))
+                    .bounds(guiLeft + 240, guiTop + 207, 45, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("1000"), btn -> setValueDirectly(1000))
-                    .bounds(guiLeft + 270, guiTop + 207, 45, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal("10万级"), btn -> setValueDirectly(100000))
+                    .bounds(guiLeft + 290, guiTop + 207, 50, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("重置"), btn -> resetDefaultValue())
-                    .bounds(guiLeft + 320, guiTop + 207, 45, 20).build());
+                    .bounds(guiLeft + 345, guiTop + 207, 35, 20).build());
         } else {
             // 玩家基础状态页签按钮
             this.addRenderableWidget(Button.builder(Component.literal("一键回复满血满饱食度"), btn -> {
@@ -158,7 +163,9 @@ public class DevHelperScreen extends Screen {
             }).bounds(guiLeft + 20, guiTop + 50, 160, 22).build());
 
             this.playerStatInputBox = new EditBox(this.font, guiLeft + 20, guiTop + 90, 100, 18, Component.literal("StatValue"));
-            this.playerStatInputBox.setValue("100");
+            this.playerStatInputBox.setMaxLength(10);
+            this.playerStatInputBox.setTextColor(0xFFFFFF);
+            this.playerStatInputBox.setValue("1000");
             this.addRenderableWidget(this.playerStatInputBox);
 
             this.addRenderableWidget(Button.builder(Component.literal("设置当前血量"), btn -> {
@@ -237,7 +244,7 @@ public class DevHelperScreen extends Screen {
         try {
             double val = Double.parseDouble(valueInputBox.getValue());
             DevHelperNetwork.CHANNEL.sendToServer(new C2SUpdateAttributePacket(selectedAttribute.id, val));
-            showStatus("已提交 " + selectedAttribute.chineseName + " -> " + (long)val + " 级！");
+            showStatus("已成功提交 " + selectedAttribute.chineseName + " -> " + (long)val + " (支持任意无上限输入)!");
             refreshAttributeList();
         } catch (NumberFormatException e) {
             showStatus("请输入有效的数值！");
@@ -247,13 +254,13 @@ public class DevHelperScreen extends Screen {
     private void addValue(double add) {
         if (selectedAttribute == null) return;
         double next = selectedAttribute.baseValue + add;
-        if (valueInputBox != null) valueInputBox.setValue(String.format(Locale.ROOT, "%.2f", next));
+        if (valueInputBox != null) valueInputBox.setValue(String.format(Locale.ROOT, "%.0f", next));
         applyValue();
     }
 
     private void setValueDirectly(double val) {
         if (selectedAttribute == null) return;
-        if (valueInputBox != null) valueInputBox.setValue(String.format(Locale.ROOT, "%.2f", val));
+        if (valueInputBox != null) valueInputBox.setValue(String.format(Locale.ROOT, "%.0f", val));
         applyValue();
     }
 
@@ -266,7 +273,7 @@ public class DevHelperScreen extends Screen {
 
     private void showStatus(String msg) {
         this.statusMessage = msg;
-        this.statusTimer = System.currentTimeMillis() + 3000;
+        this.statusTimer = System.currentTimeMillis() + 3500;
     }
 
     @Override
@@ -298,7 +305,7 @@ public class DevHelperScreen extends Screen {
                 if (mouseX >= guiLeft + 10 && mouseX <= guiLeft + 380 && mouseY >= itemY && mouseY <= itemY + ITEM_HEIGHT - 2) {
                     this.selectedAttribute = filteredAttributes.get(index);
                     if (this.valueInputBox != null) {
-                        this.valueInputBox.setValue(String.format(Locale.ROOT, "%.2f", selectedAttribute.baseValue));
+                        this.valueInputBox.setValue(String.format(Locale.ROOT, "%.0f", selectedAttribute.baseValue > 0 ? selectedAttribute.baseValue : 1000));
                     }
                     return true;
                 }
@@ -317,17 +324,25 @@ public class DevHelperScreen extends Screen {
         int guiTop = 15;
 
         // 背景深色主面板 (390 x 240)
-        graphics.fill(guiLeft, guiTop, guiLeft + 390, guiTop + 240, 0xF0181822);
+        graphics.fill(guiLeft, guiTop, guiLeft + 390, guiTop + 240, 0xF514141E);
         graphics.renderOutline(guiLeft, guiTop, 390, 240, 0xFF4A4A66);
 
         // 标题
         graphics.drawString(this.font, Component.literal("🛠️ 开发者辅助"), guiLeft + 12, guiTop + 10, 0xFFFFFF);
 
         if (this.activeTab == 0) {
+            // 输入框焦点与醒目白色/青色发光边框绘制 (彻底解决“鼠标光标闪烁不明显”问题)
+            if (this.searchBox != null && this.searchBox.isFocused()) {
+                graphics.renderOutline(guiLeft + 9, guiTop + 31, 372, 20, 0xFF00E5FF);
+            }
+            if (this.valueInputBox != null && this.valueInputBox.isFocused()) {
+                graphics.renderOutline(guiLeft + 9, guiTop + 207, 112, 20, 0xFF00E5FF);
+            }
+
             // 绘制属性列表区域背景
             int listTop = guiTop + 55;
             int listHeight = VISIBLE_ITEMS * ITEM_HEIGHT;
-            graphics.fill(guiLeft + 8, listTop - 2, guiLeft + 382, listTop + listHeight + 2, 0xFF101018);
+            graphics.fill(guiLeft + 8, listTop - 2, guiLeft + 382, listTop + listHeight + 2, 0xFF0C0C12);
             graphics.renderOutline(guiLeft + 8, listTop - 2, 374, listHeight + 4, 0xFF2E2E40);
 
             for (int i = 0; i < VISIBLE_ITEMS; i++) {
@@ -338,8 +353,12 @@ public class DevHelperScreen extends Screen {
                 int itemY = listTop + i * ITEM_HEIGHT;
                 boolean isSelected = (selectedAttribute != null && selectedAttribute.id.equals(item.id));
 
-                int bgColor = isSelected ? 0xFF2F4575 : (i % 2 == 0 ? 0xFF161622 : 0xFF1B1B2B);
+                int bgColor = isSelected ? 0xFF2D4E8A : (i % 2 == 0 ? 0xFF141420 : 0xFF191928);
                 graphics.fill(guiLeft + 10, itemY, guiLeft + 380, itemY + ITEM_HEIGHT - 2, bgColor);
+
+                if (isSelected) {
+                    graphics.renderOutline(guiLeft + 10, itemY, 370, ITEM_HEIGHT - 2, 0xFFFFAA00);
+                }
 
                 // 显示【中文名称】与 ID
                 String titleText = item.chineseName + "  (" + item.id + ")";
@@ -351,7 +370,7 @@ public class DevHelperScreen extends Screen {
                     String valStr = String.format(Locale.ROOT, "生效:%.1f | 基址:%.1f", item.currentValue, item.baseValue);
                     graphics.drawString(this.font, valStr, guiLeft + 235, itemY + 6, 0x55FF55);
                 } else {
-                    graphics.drawString(this.font, "可一键升至指定级数", guiLeft + 250, itemY + 6, 0x55FFFF);
+                    graphics.drawString(this.font, "支持输入任意无限大级别", guiLeft + 235, itemY + 6, 0x00E5FF);
                 }
             }
 
@@ -359,6 +378,10 @@ public class DevHelperScreen extends Screen {
             if (filteredAttributes.size() > VISIBLE_ITEMS) {
                 String scrollInfo = (scrollOffset + 1) + "-" + Math.min(scrollOffset + VISIBLE_ITEMS, filteredAttributes.size()) + " / " + filteredAttributes.size();
                 graphics.drawString(this.font, scrollInfo, guiLeft + 310, guiTop + 36, 0x888888);
+            }
+        } else {
+            if (this.playerStatInputBox != null && this.playerStatInputBox.isFocused()) {
+                graphics.renderOutline(guiLeft + 19, guiTop + 89, 102, 20, 0xFF00E5FF);
             }
         }
 
