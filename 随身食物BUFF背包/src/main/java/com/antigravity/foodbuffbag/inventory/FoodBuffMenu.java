@@ -88,7 +88,7 @@ public class FoodBuffMenu extends AbstractContainerMenu {
                 stack.getTag().contains("Potion", 8) ||
                 stack.getTag().contains("CustomPotionEffects", 9))) return true;
 
-        return false;
+        return !stack.isEmpty();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.antigravity.foodbuffbag.capability;
 
+import com.antigravity.foodbuffbag.inventory.FoodBuffMenu;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
@@ -23,8 +24,8 @@ public class FoodBuffProvider implements ICapabilitySerializable<CompoundTag> {
     private final ItemStackHandler inventory = new ItemStackHandler(TOTAL_SLOTS) {
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
-            // 只允许食物或带药水/食谱特性的物品放入
-            return stack.isEdible() || stack.getItem().isEdible();
+            // 允许食物、附魔装备/武器/防具/工具及全量物品放入
+            return FoodBuffMenu.isSupportedItem(stack);
         }
     };
 
