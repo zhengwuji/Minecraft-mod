@@ -1,5 +1,6 @@
 package com.antigravity.tracker.config;
 
+import com.antigravity.tracker.client.render.WorldRenderHandler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -86,6 +87,7 @@ public class TrackerConfig {
                 JsonObject obj = json.getAsJsonObject("trackedItems");
                 obj.entrySet().forEach(entry -> trackedItems.put(entry.getKey(), entry.getValue().getAsInt()));
             }
+            WorldRenderHandler.clearCache();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -142,6 +144,7 @@ public class TrackerConfig {
         } else {
             trackedEntities.remove(id);
         }
+        WorldRenderHandler.clearCache();
         saveConfig();
     }
 
@@ -151,6 +154,7 @@ public class TrackerConfig {
         } else {
             trackedBlocks.remove(id);
         }
+        WorldRenderHandler.clearCache();
         saveConfig();
     }
 
@@ -160,6 +164,7 @@ public class TrackerConfig {
         } else {
             trackedItems.remove(id);
         }
+        WorldRenderHandler.clearCache();
         saveConfig();
     }
 

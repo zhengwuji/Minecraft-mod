@@ -70,13 +70,22 @@ public class WorldRenderHandler {
     private static boolean isScanning = false;
     private static int tickCounter = 0;
 
+    public static void clearCache() {
+        synchronized (CACHED_BLOCK_TARGETS) {
+            CACHED_BLOCK_TARGETS.clear();
+        }
+    }
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
-        if (!TrackerConfig.enabled || TrackerConfig.trackedBlocks.isEmpty()) return;
+        if (!TrackerConfig.enabled || TrackerConfig.trackedBlocks.isEmpty()) {
+            clearCache(); // 当功能关闭或追踪列表为空时，立即清除残留缓存！
+            return;
+        }
 
         tickCounter++;
-        // 每 10 个 Tick (0.5 秒) 执行一次异步区块扫描，确保零卡顿与 60+ FPS 极限流畅
+        // 每 10 个 Tick (0.5 秒) 执行一次异步区块扫描
         if (tickCounter % 10 == 0 && !isScanning) {
             Minecraft mc = Minecraft.getInstance();
             Player player = mc.player;
@@ -229,12 +238,15 @@ public class WorldRenderHandler {
             }
         }
 
-        // 2. 渲染缓存的 X-Ray 级方块/宝箱目标 (0 延迟极速渲染)
+        // 2. 渲染缓存的 X-Ray 级方块/宝箱目标 (实时校验：若已取消勾选则瞬间关停渲染)
         synchronized (CACHED_BLOCK_TARGETS) {
             BlockPos pPos = player.blockPosition();
             double maxDistSq = TrackerConfig.maxDistance * TrackerConfig.maxDistance;
 
             for (BlockTarget target : CACHED_BLOCK_TARGETS) {
+                // 实时双重校验：只要该方块 ID 不在最新配置中，瞬间跳过渲染！
+                if (!TrackerConfig.trackedBlocks.containsKey(target.id)) continue;
+
                 BlockPos bPos = target.pos;
                 double distSq = bPos.distSqr(pPos);
                 if (distSq <= maxDistSq) {
@@ -266,17 +278,14 @@ public class WorldRenderHandler {
     }
 
     private static boolean isEntityTracked(String id) {
-        // 严格 1 对 1 精确匹配
         return TrackerConfig.trackedEntities.containsKey(id);
     }
 
     private static boolean isItemTracked(String id) {
-        // 严格 1 对 1 精确匹配
         return TrackerConfig.trackedItems.containsKey(id);
     }
 
     public static boolean isBlockTracked(String bId, Block block, BlockState state) {
-        // 严格 1 对 1 精确匹配：删除任何模糊通配逻辑
         return TrackerConfig.trackedBlocks.containsKey(bId);
     }
 
