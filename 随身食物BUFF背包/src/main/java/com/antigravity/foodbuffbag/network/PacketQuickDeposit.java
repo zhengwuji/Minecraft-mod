@@ -27,7 +27,7 @@ public class PacketQuickDeposit {
                     // 遍历玩家背包主槽位及快捷栏 (0 - 35)
                     for (int i = 0; i < player.getInventory().items.size(); i++) {
                         ItemStack pStack = player.getInventory().items.get(i);
-                        if (!pStack.isEmpty() && (pStack.isEdible() || pStack.getItem().isEdible())) {
+                        if (FoodBuffMenu.isSupportedItem(pStack)) {
                             ItemStack remaining = depositToCap(cap, pStack);
                             if (remaining.getCount() != pStack.getCount()) {
                                 player.getInventory().items.set(i, remaining);

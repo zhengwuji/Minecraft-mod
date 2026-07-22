@@ -67,6 +67,30 @@ public class FoodBuffMenu extends AbstractContainerMenu {
         return true;
     }
 
+    public static boolean isSupportedItem(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        // 1. 食物
+        if (stack.isEdible() || stack.getItem().isEdible()) return true;
+        // 2. 附魔物品与装备 (含有 Enchantments NBT 或已附魔)
+        if (stack.isEnchanted() || (stack.hasTag() && stack.getTag().contains("Enchantments", 9))) return true;
+        // 3. 常见防具、武器、工具与装备
+        if (stack.getItem() instanceof net.minecraft.world.item.ArmorItem ||
+            stack.getItem() instanceof net.minecraft.world.item.SwordItem ||
+            stack.getItem() instanceof net.minecraft.world.item.DiggerItem ||
+            stack.getItem() instanceof net.minecraft.world.item.BowItem ||
+            stack.getItem() instanceof net.minecraft.world.item.ShieldItem ||
+            stack.getItem() instanceof net.minecraft.world.item.CrossbowItem ||
+            stack.getItem() instanceof net.minecraft.world.item.TridentItem ||
+            stack.getItem() instanceof net.minecraft.world.item.ShearsItem ||
+            stack.getItem() instanceof net.minecraft.world.item.FishingRodItem) return true;
+        // 4. 含有药水效果或属性修饰符的物品
+        if (stack.hasTag() && (stack.getTag().contains("AttributeModifiers", 9) ||
+                stack.getTag().contains("Potion", 8) ||
+                stack.getTag().contains("CustomPotionEffects", 9))) return true;
+
+        return false;
+    }
+
     @Override
     public @NotNull ItemStack quickMoveStack(@NotNull Player player, int index) {
         ItemStack itemstack = ItemStack.EMPTY;
@@ -76,13 +100,13 @@ public class FoodBuffMenu extends AbstractContainerMenu {
             itemstack = itemstack1.copy();
 
             if (index < 54) {
-                // 从当前食物背包页移动到玩家背包
+                // 从当前食物/装备背包页移动到玩家背包
                 if (!this.moveItemStackTo(itemstack1, 54, this.slots.size(), true)) {
                     return ItemStack.EMPTY;
                 }
             } else {
-                // 从玩家背包快捷放入当前食物背包页
-                if (itemstack1.isEdible() || itemstack1.getItem().isEdible()) {
+                // 从玩家背包快捷放入当前背包页（支持食物与附魔装备）
+                if (isSupportedItem(itemstack1)) {
                     if (!this.moveItemStackTo(itemstack1, 0, 54, false)) {
                         return ItemStack.EMPTY;
                     }
@@ -137,7 +161,7 @@ public class FoodBuffMenu extends AbstractContainerMenu {
 
         @Override
         public boolean mayPlace(@NotNull ItemStack stack) {
-            return stack.isEdible() || stack.getItem().isEdible();
+            return isSupportedItem(stack);
         }
 
         @Override

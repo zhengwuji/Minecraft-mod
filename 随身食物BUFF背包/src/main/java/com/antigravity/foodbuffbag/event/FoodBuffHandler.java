@@ -18,11 +18,17 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SuspiciousStewItem;
+import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+
+import java.util.Map;
 
 @Mod.EventBusSubscriber(modid = FoodBuffBag.MOD_ID)
 public class FoodBuffHandler {
@@ -38,7 +44,7 @@ public class FoodBuffHandler {
         }
     }
 
-    // 2. 玩家死亡/重用/跨维度克隆时，继承所有随身食物仓数据
+    // 2. 玩家死亡/重用/跨维度克隆时，继承所有随身仓数据
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
         Player oldPlayer = event.getOriginal();
@@ -53,7 +59,7 @@ public class FoodBuffHandler {
         oldPlayer.invalidateCaps();
     }
 
-    // 3. 实时 ServerPlayer Tick，带早退优化与 De-buff 自动过滤
+    // 3. 实时 ServerPlayer Tick，同时支持【食物BUFF】与【附魔装备BUFF】
     @SubscribeEvent
     public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         if (event.phase == TickEvent.Phase.END && !event.player.level().isClientSide()) {
@@ -69,32 +75,30 @@ public class FoodBuffHandler {
                         ItemStack stack = cap.getStackInSlot(i);
                         if (stack.isEmpty()) {
                             emptyStreak++;
-                            // 性能优化早退判定：遇到连续 108 个空槽位（即整整 2 页为空）自动中断循环
                             if (emptyStreak > 108) {
                                 break;
                             }
                             continue;
                         }
 
-                        // 重置连续空槽计数
                         emptyStreak = 0;
-                        applyStackFoodEffects(player, stack);
+                        // 应用食物及附魔装备的全套 BUFF 效果
+                        applyStackItemEffects(player, stack);
                     }
                 });
             }
         }
     }
 
-    private static void applyStackFoodEffects(ServerPlayer player, ItemStack stack) {
+    private static void applyStackItemEffects(ServerPlayer player, ItemStack stack) {
         boolean filterHarmful = FoodBuffConfig.FILTER_HARMFUL.get();
 
-        // A. 通用 FoodProperties 药水效果解析（涵盖大部分原生及模组食物）
+        // A. 食物属性 (FoodProperties) 效果解析
         FoodProperties food = stack.getItem().getFoodProperties(stack, player);
         if (food != null) {
             for (Pair<MobEffectInstance, Float> pair : food.getEffects()) {
                 MobEffectInstance origEffect = pair.getFirst();
                 if (origEffect != null) {
-                    // 自动过滤负面/有害药水效果
                     if (filterHarmful && origEffect.getEffect().getCategory() == MobEffectCategory.HARMFUL) {
                         continue;
                     }
@@ -103,7 +107,7 @@ public class FoodBuffHandler {
             }
         }
 
-        // B. 迷之炖菜 (SuspiciousStewItem) 特殊效果处理
+        // B. 迷之炖菜 (SuspiciousStewItem)
         if (stack.getItem() instanceof SuspiciousStewItem) {
             CompoundTag tag = stack.getTag();
             if (tag != null && tag.contains("Effects", 9)) {
@@ -122,7 +126,7 @@ public class FoodBuffHandler {
             }
         }
 
-        // C. 经典金苹果与附魔金苹果兜底强化
+        // C. 金苹果与附魔金苹果强化
         if (stack.is(Items.ENCHANTED_GOLDEN_APPLE)) {
             addOrRefreshInfiniteEffect(player, MobEffects.REGENERATION, 1);    // 生命恢复 II
             addOrRefreshInfiniteEffect(player, MobEffects.ABSORPTION, 3);       // 伤害吸收 IV
@@ -131,6 +135,77 @@ public class FoodBuffHandler {
         } else if (stack.is(Items.GOLDEN_APPLE)) {
             addOrRefreshInfiniteEffect(player, MobEffects.REGENERATION, 1);    // 生命恢复 II
             addOrRefreshInfiniteEffect(player, MobEffects.ABSORPTION, 0);       // 伤害吸收 I
+        }
+
+        // D. 药水与带有药水效果的物品解析
+        for (MobEffectInstance effect : PotionUtils.getMobEffects(stack)) {
+            if (filterHarmful && effect.getEffect().getCategory() == MobEffectCategory.HARMFUL) {
+                continue;
+            }
+            addOrRefreshInfiniteEffect(player, effect.getEffect(), effect.getAmplifier());
+        }
+
+        // E. 附魔装备与附魔物品全效解析（支持原版及所有 MOD 的附魔装备）
+        if (stack.isEnchanted() || (stack.hasTag() && stack.getTag().contains("Enchantments", 9))) {
+            Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(stack);
+            for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
+                Enchantment enchant = entry.getKey();
+                int level = entry.getValue();
+                if (enchant == null || level <= 0) continue;
+
+                int amp = Math.max(0, level - 1);
+
+                // 1. 保护防具类附魔 -> 伤害减免与抗性提升
+                if (enchant == Enchantments.ALL_DAMAGE_PROTECTION || enchant == Enchantments.FIRE_PROTECTION
+                        || enchant == Enchantments.BLAST_PROTECTION || enchant == Enchantments.PROJECTILE_PROTECTION) {
+                    addOrRefreshInfiniteEffect(player, MobEffects.DAMAGE_RESISTANCE, Math.min(amp, 4));
+                    if (enchant == Enchantments.FIRE_PROTECTION) {
+                        addOrRefreshInfiniteEffect(player, MobEffects.FIRE_RESISTANCE, 0);
+                    }
+                }
+                // 2. 武器攻击类附魔 (锋利/力量/亡灵杀手/节肢杀手) -> 攻击力与力量 BUFF
+                else if (enchant == Enchantments.SHARPNESS || enchant == Enchantments.POWER_ARROWS
+                        || enchant == Enchantments.SMITE || enchant == Enchantments.BANE_OF_ARTHROPODS) {
+                    addOrRefreshInfiniteEffect(player, MobEffects.DAMAGE_BOOST, Math.min(amp, 4));
+                }
+                // 3. 水下类附魔 (水下呼吸/深海游将)
+                else if (enchant == Enchantments.RESPIRATION || enchant == Enchantments.AQUA_AFFINITY) {
+                    addOrRefreshInfiniteEffect(player, MobEffects.WATER_BREATHING, 0);
+                    addOrRefreshInfiniteEffect(player, MobEffects.DIG_SPEED, amp);
+                }
+                // 4. 移动与速度类附魔 (深海游将/灵魂疾行/迅捷潜行)
+                else if (enchant == Enchantments.DEPTH_STRIDER || enchant == Enchantments.SOUL_SPEED
+                        || enchant == Enchantments.SWIFT_SNEAK) {
+                    addOrRefreshInfiniteEffect(player, MobEffects.MOVEMENT_SPEED, amp);
+                }
+                // 5. 摔落保护 (缓降)
+                else if (enchant == Enchantments.FALL_PROTECTION) {
+                    addOrRefreshInfiniteEffect(player, MobEffects.SLOW_FALLING, 0);
+                    addOrRefreshInfiniteEffect(player, MobEffects.DAMAGE_RESISTANCE, 0);
+                }
+                // 6. 挖掘效率 (急迫)
+                else if (enchant == Enchantments.BLOCK_EFFICIENCY) {
+                    addOrRefreshInfiniteEffect(player, MobEffects.DIG_SPEED, amp);
+                }
+                // 7. 幸运/时运/抢夺/海之眷顾 -> 幸运 BUFF
+                else if (enchant == Enchantments.MOB_LOOTING || enchant == Enchantments.BLOCK_FORTUNE
+                        || enchant == Enchantments.FISHING_LUCK) {
+                    addOrRefreshInfiniteEffect(player, MobEffects.LUCK, amp);
+                }
+                // 8. 经验修补与耐久 -> 自动生命恢复
+                else if (enchant == Enchantments.MENDING || enchant == Enchantments.UNBREAKING) {
+                    addOrRefreshInfiniteEffect(player, MobEffects.REGENERATION, amp);
+                    // 自动缓慢修补背包内的受损装备
+                    if (enchant == Enchantments.MENDING && stack.isDamaged() && player.getRandom().nextFloat() < 0.3F) {
+                        stack.setDamageValue(stack.getDamageValue() - 1);
+                    }
+                }
+                // 9. 任意其它原版及 MOD 附魔装备通用保底提升
+                else {
+                    addOrRefreshInfiniteEffect(player, MobEffects.REGENERATION, 0);
+                    addOrRefreshInfiniteEffect(player, MobEffects.DAMAGE_RESISTANCE, 0);
+                }
+            }
         }
     }
 
@@ -141,7 +216,7 @@ public class FoodBuffHandler {
         if (existing == null || existing.getAmplifier() < amplifier || existing.getDuration() < 100) {
             MobEffectInstance newEffect = new MobEffectInstance(
                     effect,
-                    300,            // 15 秒持续时间
+                    300,            // 15 秒持续刷新
                     amplifier,
                     false,          // ambient
                     true,           // visible
