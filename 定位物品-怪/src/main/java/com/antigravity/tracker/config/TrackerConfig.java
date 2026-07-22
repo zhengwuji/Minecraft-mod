@@ -14,12 +14,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TrackerConfig {
-    public static boolean enabled = true;
-    public static double maxDistance = 1000.0; // 默认 1000 米
+    // 每次进入游戏时，全局主开关强制保持关闭状态 (enabled = false)，防止进入游戏瞬间扫描造成卡顿
+    public static boolean enabled = false;
+    public static double maxDistance = 512.0; // 默认 512 米
     public static boolean showTracers = true;
     public static boolean showDistanceText = true;
 
-    // 目标注册名 ID -> ARGB 颜色值映射
+    // 目标注册名 ID -> ARGB 颜色值映射 (保存用户的追踪配置)
     public static final Map<String, Integer> trackedEntities = new HashMap<>();
     public static final Map<String, Integer> trackedBlocks = new HashMap<>();
     public static final Map<String, Integer> trackedItems = new HashMap<>();
@@ -43,24 +44,6 @@ public class TrackerConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     static {
-        // 默认初始化预设常用目标
-        trackedEntities.put("artifacts:mimic", 0xFFFF0000);         // 宝箱怪 -> 红色
-        trackedEntities.put("faded_conquest_2:mimic", 0xFFFF0000);   // 惊骇宝箱怪 -> 红色
-        trackedEntities.put("grimoireofgaia:mimic", 0xFFFF0000);     // 虚伪宝箱怪 -> 红色
-        trackedEntities.put("minecraft:zombie", 0xFFFF0000);         // 僵尸 -> 红色
-        trackedEntities.put("minecraft:skeleton", 0xFFFF0000);       // 骷髅 -> 红色
-        trackedEntities.put("minecraft:creeper", 0xFFFF8800);        // 苦力怕 -> 橙色
-        trackedEntities.put("minecraft:ender_dragon", 0xFFBB00FF);    // 末影龙 -> 紫色
-
-        trackedBlocks.put("minecraft:chest", 0xFFFFFF00);             // 宝箱 -> 黄色
-        trackedBlocks.put("lootr:lootr_chest", 0xFFFFFF00);
-        trackedBlocks.put("minecraft:diamond_ore", 0xFF00FFFF);       // 钻石矿石 -> 青色
-        trackedBlocks.put("minecraft:deepslate_diamond_ore", 0xFF00FFFF);
-        trackedBlocks.put("minecraft:ancient_debris", 0xFFFFFF00);    // 远古残骸 -> 黄色
-
-        trackedItems.put("minecraft:diamond", 0xFF00FFFF);           // 钻石掉落物 -> 青色
-        trackedItems.put("minecraft:netherite_ingot", 0xFFBB00FF);   // 下界合金锭 -> 紫色
-
         loadConfig();
     }
 
@@ -74,12 +57,14 @@ public class TrackerConfig {
     }
 
     public static synchronized void loadConfig() {
+        // 每次进入游戏加载配置时，主开关强制置为 false (保证进入游戏 0 卡顿)
+        enabled = false;
+
         File file = getConfigFile();
         if (!file.exists()) return;
 
         try (FileReader reader = new FileReader(file)) {
             JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
-            if (json.has("enabled")) enabled = json.get("enabled").getAsBoolean();
             if (json.has("maxDistance")) maxDistance = json.get("maxDistance").getAsDouble();
             if (json.has("showTracers")) showTracers = json.get("showTracers").getAsBoolean();
             if (json.has("showDistanceText")) showDistanceText = json.get("showDistanceText").getAsBoolean();
