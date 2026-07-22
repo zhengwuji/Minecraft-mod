@@ -4,15 +4,13 @@ import com.antigravity.tracker.ItemEntityTracker;
 import com.antigravity.tracker.config.TrackerConfig;
 import com.antigravity.tracker.util.ChineseNameMapper;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -34,6 +32,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -80,12 +79,11 @@ public class WorldRenderHandler {
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) return;
         if (!TrackerConfig.enabled || TrackerConfig.trackedBlocks.isEmpty()) {
-            clearCache(); // 当功能关闭或追踪列表为空时，立即清除残留缓存！
+            clearCache();
             return;
         }
 
         tickCounter++;
-        // 每 10 个 Tick (0.5 秒) 执行一次异步区块扫描
         if (tickCounter % 10 == 0 && !isScanning) {
             Minecraft mc = Minecraft.getInstance();
             Player player = mc.player;
@@ -109,7 +107,6 @@ public class WorldRenderHandler {
                                 LevelChunk chunk = level.getChunkSource().getChunk(cx, cz, false);
                                 if (chunk == null) continue;
 
-                                // A. 扫描 BlockEntity (宝箱、Lootr战利品箱、木桶、刷怪笼、精妙背包等)
                                 for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
                                     BlockPos bPos = entry.getKey();
                                     if (bPos.distSqr(pPos) > maxDist * maxDist) continue;
@@ -127,7 +124,6 @@ public class WorldRenderHandler {
                                     }
                                 }
 
-                                // B. 扫描区块 Sub-Sections (普通矿石、远古残骸等)
                                 LevelChunkSection[] sections = chunk.getSections();
                                 for (int sIdx = 0; sIdx < sections.length; sIdx++) {
                                     LevelChunkSection section = sections[sIdx];
@@ -187,20 +183,25 @@ public class WorldRenderHandler {
         Vec3 camPos = camera.getPosition();
         PoseStack poseStack = event.getPoseStack();
 
-        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
-        VertexConsumer linesConsumer = bufferSource.getBuffer(RenderType.lines());
+        Tesselator tesselator = Tesselator.getInstance();
+        BufferBuilder builder = tesselator.getBuilder();
 
+        // 开启 100% 极限 OpenGL 无视深度遮挡穿透绘制
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.disableDepthTest();
+        RenderSystem.depthMask(false);
+        RenderSystem.depthFunc(GL11.GL_ALWAYS);
         RenderSystem.lineWidth(3.0F);
 
-        // 1. 扫描与渲染【实体/怪物/掉落物】
+        builder.begin(VertexFormat.Mode.DEBUG_LINES, DefaultVertexFormat.POSITION_COLOR);
+
+        // 1. 绘制实体/怪物/掉落物 3D 透视边框与射线
         for (Entity entity : level.entitiesForRendering()) {
             if (entity == player) continue;
             double distSq = entity.distanceToSqr(player);
             if (distSq > TrackerConfig.maxDistance * TrackerConfig.maxDistance) continue;
 
             String trackerId = null;
-            String name = "";
             int color = 0xFF00FF00;
 
             if (entity instanceof ItemEntity itemEntity) {
@@ -210,7 +211,6 @@ public class WorldRenderHandler {
                     if (itemLoc != null && isItemTracked(itemLoc.toString())) {
                         trackerId = itemLoc.toString();
                         color = TrackerConfig.getItemColor(trackerId);
-                        name = ChineseNameMapper.getItemName(stack.getItem(), trackerId);
                     }
                 }
             } else {
@@ -218,62 +218,105 @@ public class WorldRenderHandler {
                 if (entityLoc != null && isEntityTracked(entityLoc.toString())) {
                     trackerId = entityLoc.toString();
                     color = TrackerConfig.getEntityColor(trackerId);
-                    name = ChineseNameMapper.getEntityName(entity.getType(), trackerId);
                 }
             }
 
             if (trackerId != null) {
-                double dist = Math.sqrt(distSq);
                 AABB box = entity.getBoundingBox().move(-camPos.x, -camPos.y, -camPos.z);
-                renderColorBox(poseStack, linesConsumer, box, color);
+                addBoxToBuffer(poseStack, builder, box, color);
 
                 if (TrackerConfig.showTracers) {
-                    renderTracerLine(poseStack, linesConsumer, camPos, entity.getBoundingBox().getCenter(), color);
-                }
-
-                if (TrackerConfig.showDistanceText) {
-                    String text = String.format(Locale.ROOT, "%s (%.1fm)", name, dist);
-                    renderBillboardText(poseStack, bufferSource, mc.font, text, entity.getX() - camPos.x, entity.getY() + entity.getBbHeight() + 0.4 - camPos.y, entity.getZ() - camPos.z, color);
+                    addTracerToBuffer(poseStack, builder, camPos, entity.getBoundingBox().getCenter(), color);
                 }
             }
         }
 
-        // 2. 渲染缓存的 X-Ray 级方块/宝箱目标 (实时校验：若已取消勾选则瞬间关停渲染)
+        // 2. 绘制缓存的方块/宝箱/矿石 3D 透视边框与射线
         synchronized (CACHED_BLOCK_TARGETS) {
             BlockPos pPos = player.blockPosition();
             double maxDistSq = TrackerConfig.maxDistance * TrackerConfig.maxDistance;
 
             for (BlockTarget target : CACHED_BLOCK_TARGETS) {
-                // 实时双重校验：只要该方块 ID 不在最新配置中，瞬间跳过渲染！
                 if (!TrackerConfig.trackedBlocks.containsKey(target.id)) continue;
 
                 BlockPos bPos = target.pos;
                 double distSq = bPos.distSqr(pPos);
                 if (distSq <= maxDistSq) {
-                    renderBlockTarget(poseStack, linesConsumer, bufferSource, mc.font, camPos, bPos, target.block, target.id, Math.sqrt(distSq));
+                    int color = TrackerConfig.getBlockColor(target.id);
+                    AABB box = new AABB(bPos).move(-camPos.x, -camPos.y, -camPos.z);
+                    addBoxToBuffer(poseStack, builder, box, color);
+
+                    if (TrackerConfig.showTracers) {
+                        addTracerToBuffer(poseStack, builder, camPos, new Vec3(bPos.getX() + 0.5, bPos.getY() + 0.5, bPos.getZ() + 0.5), color);
+                    }
                 }
             }
         }
 
-        bufferSource.endBatch(RenderType.lines());
+        BufferUploader.drawWithShader(builder.end());
+
+        // 恢复 OpenGL 标准绘制管道
+        RenderSystem.depthFunc(GL11.GL_LEQUAL);
         RenderSystem.enableDepthTest();
+        RenderSystem.depthMask(true);
         RenderSystem.lineWidth(1.0F);
-    }
 
-    private static void renderBlockTarget(PoseStack poseStack, VertexConsumer linesConsumer, MultiBufferSource.BufferSource bufferSource, Font font, Vec3 camPos, BlockPos bPos, Block block, String bId, double dist) {
-        int color = TrackerConfig.getBlockColor(bId);
-
-        AABB box = new AABB(bPos).move(-camPos.x, -camPos.y, -camPos.z);
-        renderColorBox(poseStack, linesConsumer, box, color);
-
-        if (TrackerConfig.showTracers) {
-            renderTracerLine(poseStack, linesConsumer, camPos, new Vec3(bPos.getX() + 0.5, bPos.getY() + 0.5, bPos.getZ() + 0.5), color);
-        }
-
+        // 3. 绘制文字悬浮标签 (使用 SEE_THROUGH 无视遮挡模式)
         if (TrackerConfig.showDistanceText) {
-            String name = ChineseNameMapper.getBlockName(block, bId);
-            String text = String.format(Locale.ROOT, "%s (%.1fm)", name, dist);
-            renderBillboardText(poseStack, bufferSource, font, text, bPos.getX() + 0.5 - camPos.x, bPos.getY() + 1.2 - camPos.y, bPos.getZ() + 0.5 - camPos.z, color);
+            MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
+
+            for (Entity entity : level.entitiesForRendering()) {
+                if (entity == player) continue;
+                double distSq = entity.distanceToSqr(player);
+                if (distSq > TrackerConfig.maxDistance * TrackerConfig.maxDistance) continue;
+
+                String trackerId = null;
+                String name = "";
+                int color = 0xFF00FF00;
+
+                if (entity instanceof ItemEntity itemEntity) {
+                    ItemStack stack = itemEntity.getItem();
+                    if (!stack.isEmpty()) {
+                        ResourceLocation itemLoc = ForgeRegistries.ITEMS.getKey(stack.getItem());
+                        if (itemLoc != null && isItemTracked(itemLoc.toString())) {
+                            trackerId = itemLoc.toString();
+                            color = TrackerConfig.getItemColor(trackerId);
+                            name = ChineseNameMapper.getItemName(stack.getItem(), trackerId);
+                        }
+                    }
+                } else {
+                    ResourceLocation entityLoc = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+                    if (entityLoc != null && isEntityTracked(entityLoc.toString())) {
+                        trackerId = entityLoc.toString();
+                        color = TrackerConfig.getEntityColor(trackerId);
+                        name = ChineseNameMapper.getEntityName(entity.getType(), trackerId);
+                    }
+                }
+
+                if (trackerId != null) {
+                    double dist = Math.sqrt(distSq);
+                    String text = String.format(Locale.ROOT, "%s (%.1fm)", name, dist);
+                    renderBillboardText(poseStack, bufferSource, mc.font, text, entity.getX() - camPos.x, entity.getY() + entity.getBbHeight() + 0.4 - camPos.y, entity.getZ() - camPos.z, color);
+                }
+            }
+
+            synchronized (CACHED_BLOCK_TARGETS) {
+                BlockPos pPos = player.blockPosition();
+                double maxDistSq = TrackerConfig.maxDistance * TrackerConfig.maxDistance;
+
+                for (BlockTarget target : CACHED_BLOCK_TARGETS) {
+                    if (!TrackerConfig.trackedBlocks.containsKey(target.id)) continue;
+
+                    BlockPos bPos = target.pos;
+                    double distSq = bPos.distSqr(pPos);
+                    if (distSq <= maxDistSq) {
+                        int color = TrackerConfig.getBlockColor(target.id);
+                        String name = ChineseNameMapper.getBlockName(target.block, target.id);
+                        String text = String.format(Locale.ROOT, "%s (%.1fm)", name, Math.sqrt(distSq));
+                        renderBillboardText(poseStack, bufferSource, mc.font, text, bPos.getX() + 0.5 - camPos.x, bPos.getY() + 1.2 - camPos.y, bPos.getZ() + 0.5 - camPos.z, color);
+                    }
+                }
+            }
         }
     }
 
@@ -289,28 +332,53 @@ public class WorldRenderHandler {
         return TrackerConfig.trackedBlocks.containsKey(bId);
     }
 
-    private static void renderColorBox(PoseStack poseStack, VertexConsumer consumer, AABB box, int color) {
+    private static void addBoxToBuffer(PoseStack poseStack, VertexConsumer consumer, AABB box, int color) {
         float r = ((color >> 16) & 0xFF) / 255.0F;
         float g = ((color >> 8) & 0xFF) / 255.0F;
         float b = (color & 0xFF) / 255.0F;
         float a = 1.0F;
 
-        LevelRenderer.renderLineBox(poseStack, consumer, box, r, g, b, a);
+        Matrix4f mat = poseStack.last().pose();
+
+        double minX = box.minX;
+        double minY = box.minY;
+        double minZ = box.minZ;
+        double maxX = box.maxX;
+        double maxY = box.maxY;
+        double maxZ = box.maxZ;
+
+        // 12 条立方体边框线
+        drawLine(consumer, mat, minX, minY, minZ, maxX, minY, minZ, r, g, b, a);
+        drawLine(consumer, mat, maxX, minY, minZ, maxX, minY, maxZ, r, g, b, a);
+        drawLine(consumer, mat, maxX, minY, maxZ, minX, minY, maxZ, r, g, b, a);
+        drawLine(consumer, mat, minX, minY, maxZ, minX, minY, minZ, r, g, b, a);
+
+        drawLine(consumer, mat, minX, maxY, minZ, maxX, maxY, minZ, r, g, b, a);
+        drawLine(consumer, mat, maxX, maxY, minZ, maxX, maxY, maxZ, r, g, b, a);
+        drawLine(consumer, mat, maxX, maxY, maxZ, minX, maxY, maxZ, r, g, b, a);
+        drawLine(consumer, mat, minX, maxY, maxZ, minX, maxY, minZ, r, g, b, a);
+
+        drawLine(consumer, mat, minX, minY, minZ, minX, maxY, minZ, r, g, b, a);
+        drawLine(consumer, mat, maxX, minY, minZ, maxX, maxY, minZ, r, g, b, a);
+        drawLine(consumer, mat, maxX, minY, maxZ, maxX, maxY, maxZ, r, g, b, a);
+        drawLine(consumer, mat, minX, minY, maxZ, minX, maxY, maxZ, r, g, b, a);
     }
 
-    private static void renderTracerLine(PoseStack poseStack, VertexConsumer consumer, Vec3 camPos, Vec3 targetCenter, int color) {
+    private static void addTracerToBuffer(PoseStack poseStack, VertexConsumer consumer, Vec3 camPos, Vec3 targetCenter, int color) {
         float r = ((color >> 16) & 0xFF) / 255.0F;
         float g = ((color >> 8) & 0xFF) / 255.0F;
         float b = (color & 0xFF) / 255.0F;
+        float a = 1.0F;
 
-        PoseStack.Pose pose = poseStack.last();
-        Matrix4f mat = pose.pose();
-
-        Vec3 start = new Vec3(0, 0, 0);
+        Matrix4f mat = poseStack.last().pose();
         Vec3 end = targetCenter.subtract(camPos);
 
-        consumer.vertex(mat, (float) start.x, (float) start.y, (float) start.z).color(r, g, b, 1.0f).normal(pose.normal(), 0, 1, 0).endVertex();
-        consumer.vertex(mat, (float) end.x, (float) end.y, (float) end.z).color(r, g, b, 1.0f).normal(pose.normal(), 0, 1, 0).endVertex();
+        drawLine(consumer, mat, 0, 0, 0, end.x, end.y, end.z, r, g, b, a);
+    }
+
+    private static void drawLine(VertexConsumer consumer, Matrix4f mat, double x1, double y1, double z1, double x2, double y2, double z2, float r, float g, float b, float a) {
+        consumer.vertex(mat, (float) x1, (float) y1, (float) z1).color(r, g, b, a).endVertex();
+        consumer.vertex(mat, (float) x2, (float) y2, (float) z2).color(r, g, b, a).endVertex();
     }
 
     private static void renderBillboardText(PoseStack poseStack, MultiBufferSource bufferSource, Font font, String text, double x, double y, double z, int color) {
