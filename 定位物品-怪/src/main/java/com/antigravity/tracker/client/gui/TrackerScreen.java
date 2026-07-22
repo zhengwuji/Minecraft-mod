@@ -81,19 +81,15 @@ public class TrackerScreen extends Screen {
             this.addRenderableWidget(this.searchBox);
 
             // 底部一键预设快捷按钮行
-            if (this.activeTab == 0 || this.activeTab == 1) {
-                this.addRenderableWidget(Button.builder(Component.literal("一键全开宝箱怪与敌对怪"), btn -> enableAllHostileMonsters())
-                        .bounds(guiLeft + 10, guiTop + 208, 140, 20).build());
-            } else if (this.activeTab == 2) {
-                this.addRenderableWidget(Button.builder(Component.literal("一键全开常见矿石"), btn -> enableAllOres())
-                        .bounds(guiLeft + 10, guiTop + 208, 110, 20).build());
-            } else if (this.activeTab == 3) {
-                this.addRenderableWidget(Button.builder(Component.literal("一键全开贵重物品"), btn -> enableAllValuableItems())
-                        .bounds(guiLeft + 10, guiTop + 208, 110, 20).build());
-            }
+            String btnText = "一键开启筛选出的 " + filteredList.size() + " 个目标";
+            this.addRenderableWidget(Button.builder(Component.literal(btnText), btn -> enableAllFiltered())
+                    .bounds(guiLeft + 10, guiTop + 208, 175, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("清空当前页追踪"), btn -> clearCurrentTab())
-                    .bounds(guiLeft + 275, guiTop + 208, 105, 20).build());
+            this.addRenderableWidget(Button.builder(Component.literal("一键开启全箱子与宝箱怪"), btn -> enableAllChestsAndMimics())
+                    .bounds(guiLeft + 190, guiTop + 208, 115, 20).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal("清空当前页"), btn -> clearCurrentTab())
+                    .bounds(guiLeft + 310, guiTop + 208, 70, 20).build());
         } else {
             // 设置页签控制控件
             String statusText = TrackerConfig.enabled ? "全局定位追踪: [已开启]" : "全局定位追踪: [已关闭]";
@@ -212,40 +208,33 @@ public class TrackerScreen extends Screen {
         this.scrollOffset = 0;
     }
 
-    private void enableAllHostileMonsters() {
-        String[] hostiles = {
-                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic",
-                "minecraft:zombie", "minecraft:skeleton", "minecraft:creeper", "minecraft:spider",
-                "minecraft:enderman", "minecraft:witch", "minecraft:phantom", "minecraft:drowned",
-                "minecraft:husk", "minecraft:stray", "minecraft:wither_skeleton", "minecraft:blaze",
-                "minecraft:ghast", "minecraft:ender_dragon", "minecraft:wither"
+    private void enableAllFiltered() {
+        for (TargetItem item : filteredList) {
+            setTracked(item, true, getColor(item));
+        }
+        rebuildWidgets();
+    }
+
+    private void enableAllChestsAndMimics() {
+        // 开启怪物宝箱怪
+        String[] mimics = {
+                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic"
         };
-        for (String id : hostiles) {
+        for (String id : mimics) {
             TrackerConfig.toggleEntity(id, true, 0xFFFF0000);
         }
-    }
 
-    private void enableAllOres() {
-        String[] ores = {
-                "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore",
-                "minecraft:ancient_debris", "minecraft:chest", "minecraft:spawner",
-                "minecraft:emerald_ore", "minecraft:deepslate_emerald_ore",
-                "minecraft:gold_ore", "minecraft:deepslate_gold_ore",
-                "minecraft:iron_ore", "minecraft:deepslate_iron_ore"
+        // 开启方块箱子类与战利品箱
+        String[] chests = {
+                "minecraft:chest", "minecraft:trapped_chest", "minecraft:ender_chest", "minecraft:barrel",
+                "lootr:lootr_chest", "lootr:lootr_trapped_chest", "lootr:lootr_barrel", "lootr:lootr_inventory",
+                "sophisticatedstorage:chest", "sophisticatedstorage:barrel",
+                "aquamirae:frozen_chest", "avaritia:compressed_chest"
         };
-        for (String id : ores) {
+        for (String id : chests) {
             TrackerConfig.toggleBlock(id, true, 0xFFFFFF00);
         }
-    }
-
-    private void enableAllValuableItems() {
-        String[] items = {
-                "minecraft:diamond", "minecraft:netherite_ingot", "minecraft:netherite_scrap",
-                "minecraft:enchanted_golden_apple", "minecraft:totem_of_undying", "minecraft:elytra"
-        };
-        for (String id : items) {
-            TrackerConfig.toggleItem(id, true, 0xFF00FFFF);
-        }
+        rebuildWidgets();
     }
 
     private void clearCurrentTab() {
@@ -256,6 +245,7 @@ public class TrackerScreen extends Screen {
         } else if (activeTab == 1) TrackerConfig.trackedEntities.clear();
         else if (activeTab == 2) TrackerConfig.trackedBlocks.clear();
         else if (activeTab == 3) TrackerConfig.trackedItems.clear();
+        rebuildWidgets();
     }
 
     @Override

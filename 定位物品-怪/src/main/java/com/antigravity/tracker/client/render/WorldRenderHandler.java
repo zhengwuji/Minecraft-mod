@@ -20,10 +20,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.*;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -106,86 +107,73 @@ public class WorldRenderHandler {
             }
         }
 
-        // 2. 扫描与渲染【方块/宝箱/刷怪笼/矿石】 (全区块方块实体 + 近场矿石快速检索)
+        // 2. 高性能 X-Ray 级全区块方块与宝箱扫描器
         if (!TrackerConfig.trackedBlocks.isEmpty()) {
-            BlockPos pPos = player.blockPosition();
-            int pChunkX = pPos.getX() >> 4;
-            int pChunkZ = pPos.getZ() >> 4;
-            int chunkRadius = (int) Math.min(Math.ceil(TrackerConfig.maxDistance / 16.0), 16);
+            scanAndRenderXRayBlocks(level, player, camPos, poseStack, linesConsumer, bufferSource, mc.font);
+        }
 
-            Set<BlockPos> renderedPositions = new HashSet<>();
+        bufferSource.endBatch(RenderType.lines());
+        RenderSystem.enableDepthTest();
+        RenderSystem.lineWidth(1.0F);
+    }
 
-            // A. 区块 BlockEntity 扫描 (宝箱、Lootr、刷怪笼、容器等，效率极高且 100% 涵盖全地图加载箱子)
-            for (int cx = pChunkX - chunkRadius; cx <= pChunkX + chunkRadius; cx++) {
-                for (int cz = pChunkZ - chunkRadius; cz <= pChunkZ + chunkRadius; cz++) {
-                    LevelChunk chunk = level.getChunkSource().getChunk(cx, cz, false);
-                    if (chunk == null) continue;
+    private static void scanAndRenderXRayBlocks(ClientLevel level, Player player, Vec3 camPos, PoseStack poseStack, VertexConsumer linesConsumer, MultiBufferSource.BufferSource bufferSource, Font font) {
+        BlockPos pPos = player.blockPosition();
+        int pChunkX = pPos.getX() >> 4;
+        int pChunkZ = pPos.getZ() >> 4;
+        int chunkRadius = (int) Math.min(Math.ceil(TrackerConfig.maxDistance / 16.0), 16);
 
-                    for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
-                        BlockPos bPos = entry.getKey();
-                        double distSq = bPos.distSqr(pPos);
-                        if (distSq > TrackerConfig.maxDistance * TrackerConfig.maxDistance) continue;
+        Set<BlockPos> renderedPositions = new HashSet<>();
 
-                        BlockState state = entry.getValue().getBlockState();
-                        Block block = state.getBlock();
-                        ResourceLocation bLoc = ForgeRegistries.BLOCKS.getKey(block);
-                        if (bLoc != null) {
-                            String bId = bLoc.toString();
-                            if (isBlockTracked(bId)) {
-                                renderedPositions.add(bPos);
-                                int color = TrackerConfig.getBlockColor(bId);
-                                double dist = Math.sqrt(distSq);
+        for (int cx = pChunkX - chunkRadius; cx <= pChunkX + chunkRadius; cx++) {
+            for (int cz = pChunkZ - chunkRadius; cz <= pChunkZ + chunkRadius; cz++) {
+                LevelChunk chunk = level.getChunkSource().getChunk(cx, cz, false);
+                if (chunk == null) continue;
 
-                                AABB box = new AABB(bPos).move(-camPos.x, -camPos.y, -camPos.z);
-                                renderColorBox(poseStack, linesConsumer, box, color);
+                // A. 扫描 BlockEntity (全模组箱子、Lootr战利品箱、木桶、刷怪笼、精妙背包等，100%覆盖)
+                for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
+                    BlockPos bPos = entry.getKey();
+                    double distSq = bPos.distSqr(pPos);
+                    if (distSq > TrackerConfig.maxDistance * TrackerConfig.maxDistance) continue;
 
-                                if (TrackerConfig.showTracers) {
-                                    renderTracerLine(poseStack, linesConsumer, camPos, new Vec3(bPos.getX() + 0.5, bPos.getY() + 0.5, bPos.getZ() + 0.5), color);
-                                }
-
-                                if (TrackerConfig.showDistanceText) {
-                                    String name = ChineseNameMapper.getBlockName(block, bId);
-                                    String text = String.format(Locale.ROOT, "%s (%.1fm)", name, dist);
-                                    renderBillboardText(poseStack, bufferSource, mc.font, text, bPos.getX() + 0.5 - camPos.x, bPos.getY() + 1.2 - camPos.y, bPos.getZ() + 0.5 - camPos.z, color);
-                                }
-                            }
+                    BlockState state = entry.getValue().getBlockState();
+                    Block block = state.getBlock();
+                    ResourceLocation bLoc = ForgeRegistries.BLOCKS.getKey(block);
+                    if (bLoc != null) {
+                        String bId = bLoc.toString();
+                        if (isBlockTracked(bId, block, state)) {
+                            renderedPositions.add(bPos);
+                            renderBlockTarget(poseStack, linesConsumer, bufferSource, font, camPos, bPos, block, bId, Math.sqrt(distSq));
                         }
                     }
                 }
-            }
 
-            // B. 普通矿石块扫描 (对于非 BlockEntity 的普通钻石矿石、古物残骸)
-            int oreRadius = (int) Math.min(TrackerConfig.maxDistance, 48);
-            BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+                // B. 扫描区块 Sub-Sections (普通钻石矿石、远古残骸、非 BlockEntity 箱子)
+                LevelChunkSection[] sections = chunk.getSections();
+                for (int sIdx = 0; sIdx < sections.length; sIdx++) {
+                    LevelChunkSection section = sections[sIdx];
+                    if (section == null || section.hasOnlyAir()) continue;
 
-            for (int x = -oreRadius; x <= oreRadius; x += 1) {
-                for (int y = -oreRadius; y <= oreRadius; y += 1) {
-                    for (int z = -oreRadius; z <= oreRadius; z += 1) {
-                        mutable.set(pPos.getX() + x, pPos.getY() + y, pPos.getZ() + z);
-                        if (renderedPositions.contains(mutable)) continue;
+                    int sectionMinY = level.getMinBuildHeight() + sIdx * 16;
+                    for (int x = 0; x < 16; x++) {
+                        for (int y = 0; y < 16; y++) {
+                            for (int z = 0; z < 16; z++) {
+                                BlockState state = section.getBlockState(x, y, z);
+                                if (state.isAir()) continue;
 
-                        BlockState state = level.getBlockState(mutable);
-                        if (state.isAir()) continue;
-
-                        Block block = state.getBlock();
-                        ResourceLocation bLoc = ForgeRegistries.BLOCKS.getKey(block);
-                        if (bLoc != null) {
-                            String bId = bLoc.toString();
-                            if (isBlockTracked(bId)) {
-                                int color = TrackerConfig.getBlockColor(bId);
-                                double dist = Math.sqrt(mutable.distSqr(pPos));
-
-                                AABB box = new AABB(mutable).move(-camPos.x, -camPos.y, -camPos.z);
-                                renderColorBox(poseStack, linesConsumer, box, color);
-
-                                if (TrackerConfig.showTracers) {
-                                    renderTracerLine(poseStack, linesConsumer, camPos, new Vec3(mutable.getX() + 0.5, mutable.getY() + 0.5, mutable.getZ() + 0.5), color);
-                                }
-
-                                if (TrackerConfig.showDistanceText) {
-                                    String name = ChineseNameMapper.getBlockName(block, bId);
-                                    String text = String.format(Locale.ROOT, "%s (%.1fm)", name, dist);
-                                    renderBillboardText(poseStack, bufferSource, mc.font, text, mutable.getX() + 0.5 - camPos.x, mutable.getY() + 1.2 - camPos.y, mutable.getZ() + 0.5 - camPos.z, color);
+                                Block block = state.getBlock();
+                                ResourceLocation bLoc = ForgeRegistries.BLOCKS.getKey(block);
+                                if (bLoc != null) {
+                                    String bId = bLoc.toString();
+                                    if (isBlockTracked(bId, block, state)) {
+                                        BlockPos bPos = new BlockPos((cx << 4) + x, sectionMinY + y, (cz << 4) + z);
+                                        if (renderedPositions.add(bPos)) {
+                                            double distSq = bPos.distSqr(pPos);
+                                            if (distSq <= TrackerConfig.maxDistance * TrackerConfig.maxDistance) {
+                                                renderBlockTarget(poseStack, linesConsumer, bufferSource, font, camPos, bPos, block, bId, Math.sqrt(distSq));
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -193,10 +181,23 @@ public class WorldRenderHandler {
                 }
             }
         }
+    }
 
-        bufferSource.endBatch(RenderType.lines());
-        RenderSystem.enableDepthTest();
-        RenderSystem.lineWidth(1.0F);
+    private static void renderBlockTarget(PoseStack poseStack, VertexConsumer linesConsumer, MultiBufferSource.BufferSource bufferSource, Font font, Vec3 camPos, BlockPos bPos, Block block, String bId, double dist) {
+        int color = TrackerConfig.getBlockColor(bId);
+
+        AABB box = new AABB(bPos).move(-camPos.x, -camPos.y, -camPos.z);
+        renderColorBox(poseStack, linesConsumer, box, color);
+
+        if (TrackerConfig.showTracers) {
+            renderTracerLine(poseStack, linesConsumer, camPos, new Vec3(bPos.getX() + 0.5, bPos.getY() + 0.5, bPos.getZ() + 0.5), color);
+        }
+
+        if (TrackerConfig.showDistanceText) {
+            String name = ChineseNameMapper.getBlockName(block, bId);
+            String text = String.format(Locale.ROOT, "%s (%.1fm)", name, dist);
+            renderBillboardText(poseStack, bufferSource, font, text, bPos.getX() + 0.5 - camPos.x, bPos.getY() + 1.2 - camPos.y, bPos.getZ() + 0.5 - camPos.z, color);
+        }
     }
 
     private static boolean isEntityTracked(String id) {
@@ -211,23 +212,50 @@ public class WorldRenderHandler {
         return TrackerConfig.trackedItems.containsKey(id);
     }
 
-    public static boolean isBlockTracked(String bId) {
+    public static boolean isBlockTracked(String bId, Block block, BlockState state) {
         if (TrackerConfig.trackedBlocks.containsKey(bId)) return true;
 
-        // 如果开启了宝箱类目标，通配全模组宝箱/箱子/木桶/战利品箱
-        if (TrackerConfig.trackedBlocks.containsKey("minecraft:chest")) {
-            if (bId.contains("chest") || bId.contains("barrel") || bId.contains("shulker") || bId.contains("lootr") || bId.contains("storage")) {
+        String lowerId = bId.toLowerCase(Locale.ROOT);
+
+        // 如果开启了任何箱子/宝箱相关的追查目标
+        boolean chestTracked = false;
+        for (String key : TrackerConfig.trackedBlocks.keySet()) {
+            String lKey = key.toLowerCase(Locale.ROOT);
+            if (lKey.contains("chest") || lKey.contains("barrel") || lKey.contains("box") || lKey.contains("storage") || lKey.contains("箱子") || lKey.contains("宝箱")) {
+                chestTracked = true;
+                break;
+            }
+        }
+
+        if (chestTracked) {
+            if (lowerId.contains("chest") || lowerId.contains("barrel") || lowerId.contains("shulker") || lowerId.contains("lootr") || lowerId.contains("storage") || lowerId.contains("crate") || lowerId.contains("vault")) {
+                return true;
+            }
+            if (block instanceof AbstractChestBlock || block instanceof ChestBlock || block instanceof EnderChestBlock || block instanceof BarrelBlock || block instanceof ShulkerBoxBlock) {
                 return true;
             }
         }
-        // 如果开启了刷怪笼目标，通配全模组刷怪笼
-        if (TrackerConfig.trackedBlocks.containsKey("minecraft:spawner")) {
-            if (bId.contains("spawner")) return true;
+
+        // 刷怪笼通配
+        boolean spawnerTracked = false;
+        for (String key : TrackerConfig.trackedBlocks.keySet()) {
+            if (key.contains("spawner")) {
+                spawnerTracked = true;
+                break;
+            }
         }
-        // 如果开启了矿石目标，通配矿石与残骸
-        if (TrackerConfig.trackedBlocks.containsKey("minecraft:diamond_ore")) {
-            if (bId.contains("ore") || bId.contains("debris")) return true;
+        if (spawnerTracked && lowerId.contains("spawner")) return true;
+
+        // 矿石通配
+        boolean oreTracked = false;
+        for (String key : TrackerConfig.trackedBlocks.keySet()) {
+            if (key.contains("ore") || key.contains("debris")) {
+                oreTracked = true;
+                break;
+            }
         }
+        if (oreTracked && (lowerId.contains("ore") || lowerId.contains("debris"))) return true;
+
         return false;
     }
 
