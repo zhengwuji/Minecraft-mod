@@ -17,6 +17,7 @@ import java.util.*;
 
 public class TrackerScreen extends Screen {
     private EditBox searchBox;
+    private EditBox customDistBox;
     private int activeTab = 0; // 0: 全局, 1: 怪物实体, 2: 方块矿石, 3: 物品掉落, 4: 设置
 
     private final List<TargetItem> currentList = new ArrayList<>();
@@ -113,21 +114,45 @@ public class TrackerScreen extends Screen {
                 rebuildWidgets();
             }).bounds(guiLeft + 20, guiTop + 80, 170, 22).build());
 
-            // 范围设置按钮
-            this.addRenderableWidget(Button.builder(Component.literal("追踪半径: 64m"), btn -> {
-                TrackerConfig.maxDistance = 64.0;
-                rebuildWidgets();
-            }).bounds(guiLeft + 20, guiTop + 120, 100, 20).build());
-
-            this.addRenderableWidget(Button.builder(Component.literal("追踪半径: 128m"), btn -> {
+            // 半径预设按钮
+            this.addRenderableWidget(Button.builder(Component.literal("128m"), btn -> {
                 TrackerConfig.maxDistance = 128.0;
                 rebuildWidgets();
-            }).bounds(guiLeft + 130, guiTop + 120, 100, 20).build());
+            }).bounds(guiLeft + 20, guiTop + 120, 65, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("追踪半径: 256m"), btn -> {
-                TrackerConfig.maxDistance = 256.0;
+            this.addRenderableWidget(Button.builder(Component.literal("512m"), btn -> {
+                TrackerConfig.maxDistance = 512.0;
                 rebuildWidgets();
-            }).bounds(guiLeft + 240, guiTop + 120, 100, 20).build());
+            }).bounds(guiLeft + 90, guiTop + 120, 65, 20).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal("1000m"), btn -> {
+                TrackerConfig.maxDistance = 1000.0;
+                rebuildWidgets();
+            }).bounds(guiLeft + 160, guiTop + 120, 65, 20).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal("2000m"), btn -> {
+                TrackerConfig.maxDistance = 2000.0;
+                rebuildWidgets();
+            }).bounds(guiLeft + 230, guiTop + 120, 65, 20).build());
+
+            this.addRenderableWidget(Button.builder(Component.literal("5000m"), btn -> {
+                TrackerConfig.maxDistance = 5000.0;
+                rebuildWidgets();
+            }).bounds(guiLeft + 300, guiTop + 120, 65, 20).build());
+
+            // 自定义范围输入框
+            this.customDistBox = new EditBox(this.font, guiLeft + 20, guiTop + 150, 150, 20, Component.literal("CustomDist"));
+            this.customDistBox.setValue(String.valueOf((int) TrackerConfig.maxDistance));
+            this.customDistBox.setHint(Component.literal("输入自定义米数"));
+            this.addRenderableWidget(this.customDistBox);
+
+            this.addRenderableWidget(Button.builder(Component.literal("设定自定义半径"), btn -> {
+                try {
+                    double val = Double.parseDouble(customDistBox.getValue());
+                    if (val > 0) TrackerConfig.maxDistance = val;
+                } catch (Exception ignored) {}
+                rebuildWidgets();
+            }).bounds(guiLeft + 180, guiTop + 150, 110, 20).build());
         }
 
         loadTabItems();
@@ -358,10 +383,10 @@ public class TrackerScreen extends Screen {
         } else {
             // 全局设置说明
             graphics.drawString(this.font, "🎯 定位物品-怪 模组全局参数设置", guiLeft + 20, guiTop + 30, 0xFFD700);
-            graphics.drawString(this.font, "当前最大透视与距离追踪半径: " + (int)TrackerConfig.maxDistance + " 方块", guiLeft + 20, guiTop + 108, 0x00E5FF);
-            graphics.drawString(this.font, "已激活实体追踪目标数: " + TrackerConfig.trackedEntities.size(), guiLeft + 20, guiTop + 150, 0x55FF55);
-            graphics.drawString(this.font, "已激活方块追踪目标数: " + TrackerConfig.trackedBlocks.size(), guiLeft + 20, guiTop + 168, 0xFFFF55);
-            graphics.drawString(this.font, "已激活物品追踪目标数: " + TrackerConfig.trackedItems.size(), guiLeft + 20, guiTop + 186, 0xFF55FF);
+            graphics.drawString(this.font, "当前最大透视与距离追踪半径: " + (int)TrackerConfig.maxDistance + " 方块", guiLeft + 20, guiTop + 105, 0x00E5FF);
+            graphics.drawString(this.font, "已激活实体追踪目标数: " + TrackerConfig.trackedEntities.size(), guiLeft + 20, guiTop + 178, 0x55FF55);
+            graphics.drawString(this.font, "已激活方块追踪目标数: " + TrackerConfig.trackedBlocks.size(), guiLeft + 20, guiTop + 194, 0xFFFF55);
+            graphics.drawString(this.font, "已激活物品追踪目标数: " + TrackerConfig.trackedItems.size(), guiLeft + 20, guiTop + 210, 0xFF55FF);
         }
     }
 

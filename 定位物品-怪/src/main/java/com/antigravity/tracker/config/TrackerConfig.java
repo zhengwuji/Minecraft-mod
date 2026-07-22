@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class TrackerConfig {
     public static boolean enabled = true;
-    public static double maxDistance = 128.0;
+    public static double maxDistance = 1000.0; // 默认 1000 米无限制
     public static boolean showTracers = true;
     public static boolean showDistanceText = true;
 
@@ -32,18 +32,21 @@ public class TrackerConfig {
 
     static {
         // 默认初始化预设常用目标
-        trackedEntities.put("minecraft:zombie", 0xFFFF0000);       // 僵尸 -> 红色
-        trackedEntities.put("minecraft:skeleton", 0xFFFF0000);     // 骷髅 -> 红色
-        trackedEntities.put("minecraft:creeper", 0xFFFF8800);      // 苦力怕 -> 橙色
-        trackedEntities.put("minecraft:ender_dragon", 0xFFBB00FF);  // 末影龙 -> 紫色
+        trackedEntities.put("artifacts:mimic", 0xFFFF0000);         // 宝箱怪 -> 红色
+        trackedEntities.put("faded_conquest_2:mimic", 0xFFFF0000);   // 惊骇宝箱怪 -> 红色
+        trackedEntities.put("grimoireofgaia:mimic", 0xFFFF0000);     // 虚伪宝箱怪 -> 红色
+        trackedEntities.put("minecraft:zombie", 0xFFFF0000);         // 僵尸 -> 红色
+        trackedEntities.put("minecraft:skeleton", 0xFFFF0000);       // 骷髅 -> 红色
+        trackedEntities.put("minecraft:creeper", 0xFFFF8800);        // 苦力怕 -> 橙色
+        trackedEntities.put("minecraft:ender_dragon", 0xFFBB00FF);    // 末影龙 -> 紫色
 
-        trackedBlocks.put("minecraft:diamond_ore", 0xFF00FFFF);     // 钻石矿石 -> 青色
+        trackedBlocks.put("minecraft:diamond_ore", 0xFF00FFFF);       // 钻石矿石 -> 青色
         trackedBlocks.put("minecraft:deepslate_diamond_ore", 0xFF00FFFF);
-        trackedBlocks.put("minecraft:ancient_debris", 0xFFFFFF00);  // 远古残骸 -> 黄色
-        trackedBlocks.put("minecraft:chest", 0xFFFFFF00);           // 宝箱 -> 黄色
+        trackedBlocks.put("minecraft:ancient_debris", 0xFFFFFF00);    // 远古残骸 -> 黄色
+        trackedBlocks.put("minecraft:chest", 0xFFFFFF00);             // 宝箱 -> 黄色
 
-        trackedItems.put("minecraft:diamond", 0xFF00FFFF);         // 钻石掉落物 -> 青色
-        trackedItems.put("minecraft:netherite_ingot", 0xFFBB00FF); // 下界合金锭 -> 紫色
+        trackedItems.put("minecraft:diamond", 0xFF00FFFF);           // 钻石掉落物 -> 青色
+        trackedItems.put("minecraft:netherite_ingot", 0xFFBB00FF);   // 下界合金锭 -> 紫色
     }
 
     public static int getEntityColor(String id) {
