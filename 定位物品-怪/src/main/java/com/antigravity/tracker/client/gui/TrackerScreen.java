@@ -18,7 +18,7 @@ import java.util.*;
 public class TrackerScreen extends Screen {
     private EditBox searchBox;
     private EditBox customDistBox;
-    private int activeTab = 0; // 0: 全局, 1: 怪物实体, 2: 方块矿石, 3: 物品掉落, 4: 设置
+    private int activeTab = 0; // 0: 全局, 1: 已开启列表, 2: 怪物实体, 3: 方块矿石, 4: 物品掉落, 5: 设置
 
     private final List<TargetItem> currentList = new ArrayList<>();
     private final List<TargetItem> filteredList = new ArrayList<>();
@@ -55,23 +55,26 @@ public class TrackerScreen extends Screen {
         int guiLeft = centerX - 195;
         int guiTop = 15;
 
-        // 顶部 5 大功能页签按钮
+        // 顶部 6 大功能页签按钮
         this.addRenderableWidget(Button.builder(Component.literal("🔍 全局"), btn -> switchTab(0))
-                .bounds(guiLeft + 5, guiTop + 6, 65, 20).build());
+                .bounds(guiLeft + 5, guiTop + 6, 55, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("👾 怪物实体"), btn -> switchTab(1))
-                .bounds(guiLeft + 75, guiTop + 6, 75, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("✅ 已开启"), btn -> switchTab(1))
+                .bounds(guiLeft + 65, guiTop + 6, 65, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("📦 方块矿石"), btn -> switchTab(2))
-                .bounds(guiLeft + 155, guiTop + 6, 75, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("👾 怪物"), btn -> switchTab(2))
+                .bounds(guiLeft + 135, guiTop + 6, 55, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("💎 物品掉落"), btn -> switchTab(3))
-                .bounds(guiLeft + 235, guiTop + 6, 75, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("📦 矿石/方块"), btn -> switchTab(3))
+                .bounds(guiLeft + 195, guiTop + 6, 75, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("⚙️ 设置"), btn -> switchTab(4))
-                .bounds(guiLeft + 315, guiTop + 6, 68, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("💎 物品"), btn -> switchTab(4))
+                .bounds(guiLeft + 275, guiTop + 6, 55, 20).build());
 
-        if (this.activeTab != 4) {
+        this.addRenderableWidget(Button.builder(Component.literal("⚙️ 设置"), btn -> switchTab(5))
+                .bounds(guiLeft + 335, guiTop + 6, 50, 20).build());
+
+        if (this.activeTab != 5) {
             // 搜索框
             this.searchBox = new EditBox(this.font, guiLeft + 10, guiTop + 32, 370, 18, Component.literal("Search"));
             this.searchBox.setMaxLength(100);
@@ -80,59 +83,76 @@ public class TrackerScreen extends Screen {
             this.searchBox.setResponder(text -> filterList());
             this.addRenderableWidget(this.searchBox);
 
-            // 底部一键预设快捷按钮行
-            String btnText = "一键开启筛选出的 " + filteredList.size() + " 个目标";
-            this.addRenderableWidget(Button.builder(Component.literal(btnText), btn -> enableAllFiltered())
-                    .bounds(guiLeft + 10, guiTop + 208, 175, 20).build());
+            if (this.activeTab == 1) {
+                // 已开启列表管理界面
+                this.addRenderableWidget(Button.builder(Component.literal("一键全关所有已追踪目标"), btn -> clearAllTracked())
+                        .bounds(guiLeft + 10, guiTop + 208, 175, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("一键开启全箱子与宝箱怪"), btn -> enableAllChestsAndMimics())
-                    .bounds(guiLeft + 190, guiTop + 208, 115, 20).build());
+                this.addRenderableWidget(Button.builder(Component.literal("一键全开全箱子与宝箱怪"), btn -> enableAllChestsAndMimics())
+                        .bounds(guiLeft + 190, guiTop + 208, 190, 20).build());
+            } else {
+                // 底部一键预设快捷按钮行
+                String btnText = "一键开启筛选出的 " + filteredList.size() + " 个目标";
+                this.addRenderableWidget(Button.builder(Component.literal(btnText), btn -> enableAllFiltered())
+                        .bounds(guiLeft + 10, guiTop + 208, 175, 20).build());
 
-            this.addRenderableWidget(Button.builder(Component.literal("清空当前页"), btn -> clearCurrentTab())
-                    .bounds(guiLeft + 310, guiTop + 208, 70, 20).build());
+                this.addRenderableWidget(Button.builder(Component.literal("一键全开全箱子与宝箱怪"), btn -> enableAllChestsAndMimics())
+                        .bounds(guiLeft + 190, guiTop + 208, 115, 20).build());
+
+                this.addRenderableWidget(Button.builder(Component.literal("清空当前页"), btn -> clearCurrentTab())
+                        .bounds(guiLeft + 310, guiTop + 208, 70, 20).build());
+            }
         } else {
             // 设置页签控制控件
             String statusText = TrackerConfig.enabled ? "全局定位追踪: [已开启]" : "全局定位追踪: [已关闭]";
             this.addRenderableWidget(Button.builder(Component.literal(statusText), btn -> {
                 TrackerConfig.enabled = !TrackerConfig.enabled;
+                TrackerConfig.saveConfig();
                 rebuildWidgets();
             }).bounds(guiLeft + 20, guiTop + 45, 170, 22).build());
 
             String tracerText = TrackerConfig.showTracers ? "连接追踪射线: [显示]" : "连接追踪射线: [隐藏]";
             this.addRenderableWidget(Button.builder(Component.literal(tracerText), btn -> {
                 TrackerConfig.showTracers = !TrackerConfig.showTracers;
+                TrackerConfig.saveConfig();
                 rebuildWidgets();
             }).bounds(guiLeft + 200, guiTop + 45, 170, 22).build());
 
             String distText = TrackerConfig.showDistanceText ? "距离与名称悬浮标签: [显示]" : "距离与名称悬浮标签: [隐藏]";
             this.addRenderableWidget(Button.builder(Component.literal(distText), btn -> {
                 TrackerConfig.showDistanceText = !TrackerConfig.showDistanceText;
+                TrackerConfig.saveConfig();
                 rebuildWidgets();
             }).bounds(guiLeft + 20, guiTop + 80, 170, 22).build());
 
             // 半径预设按钮
             this.addRenderableWidget(Button.builder(Component.literal("128m"), btn -> {
                 TrackerConfig.maxDistance = 128.0;
+                TrackerConfig.saveConfig();
                 rebuildWidgets();
             }).bounds(guiLeft + 20, guiTop + 120, 65, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("512m"), btn -> {
                 TrackerConfig.maxDistance = 512.0;
+                TrackerConfig.saveConfig();
                 rebuildWidgets();
             }).bounds(guiLeft + 90, guiTop + 120, 65, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("1000m"), btn -> {
                 TrackerConfig.maxDistance = 1000.0;
+                TrackerConfig.saveConfig();
                 rebuildWidgets();
             }).bounds(guiLeft + 160, guiTop + 120, 65, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("2000m"), btn -> {
                 TrackerConfig.maxDistance = 2000.0;
+                TrackerConfig.saveConfig();
                 rebuildWidgets();
             }).bounds(guiLeft + 230, guiTop + 120, 65, 20).build());
 
             this.addRenderableWidget(Button.builder(Component.literal("5000m"), btn -> {
                 TrackerConfig.maxDistance = 5000.0;
+                TrackerConfig.saveConfig();
                 rebuildWidgets();
             }).bounds(guiLeft + 300, guiTop + 120, 65, 20).build());
 
@@ -145,7 +165,10 @@ public class TrackerScreen extends Screen {
             this.addRenderableWidget(Button.builder(Component.literal("设定自定义半径"), btn -> {
                 try {
                     double val = Double.parseDouble(customDistBox.getValue());
-                    if (val > 0) TrackerConfig.maxDistance = val;
+                    if (val > 0) {
+                        TrackerConfig.maxDistance = val;
+                        TrackerConfig.saveConfig();
+                    }
                 } catch (Exception ignored) {}
                 rebuildWidgets();
             }).bounds(guiLeft + 180, guiTop + 150, 110, 20).build());
@@ -161,36 +184,58 @@ public class TrackerScreen extends Screen {
 
     private void loadTabItems() {
         currentList.clear();
-        if (activeTab == 0 || activeTab == 1) {
-            // 加载实体/怪物注册表
-            for (ResourceLocation loc : ForgeRegistries.ENTITY_TYPES.getKeys()) {
-                EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(loc);
-                if (type != null) {
-                    String fullId = loc.toString();
-                    String cnName = ChineseNameMapper.getEntityName(type, fullId);
-                    currentList.add(new TargetItem(fullId, cnName, 0));
+
+        if (activeTab == 1) {
+            // ✅ 已开启列表专有页签：加载所有当前开启追踪的目标
+            TrackerConfig.trackedEntities.forEach((id, color) -> {
+                EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(new ResourceLocation(id));
+                String name = ChineseNameMapper.getEntityName(type, id);
+                currentList.add(new TargetItem(id, name, 0));
+            });
+
+            TrackerConfig.trackedBlocks.forEach((id, color) -> {
+                Block block = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(id));
+                String name = ChineseNameMapper.getBlockName(block, id);
+                currentList.add(new TargetItem(id, name, 1));
+            });
+
+            TrackerConfig.trackedItems.forEach((id, color) -> {
+                Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(id));
+                String name = ChineseNameMapper.getItemName(item, id);
+                currentList.add(new TargetItem(id, name, 2));
+            });
+        } else {
+            if (activeTab == 0 || activeTab == 2) {
+                // 加载实体/怪物注册表
+                for (ResourceLocation loc : ForgeRegistries.ENTITY_TYPES.getKeys()) {
+                    EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(loc);
+                    if (type != null) {
+                        String fullId = loc.toString();
+                        String cnName = ChineseNameMapper.getEntityName(type, fullId);
+                        currentList.add(new TargetItem(fullId, cnName, 0));
+                    }
                 }
             }
-        }
-        if (activeTab == 0 || activeTab == 2) {
-            // 加载方块/矿石注册表
-            for (ResourceLocation loc : ForgeRegistries.BLOCKS.getKeys()) {
-                Block block = ForgeRegistries.BLOCKS.getValue(loc);
-                if (block != null) {
-                    String fullId = loc.toString();
-                    String cnName = ChineseNameMapper.getBlockName(block, fullId);
-                    currentList.add(new TargetItem(fullId, cnName, 1));
+            if (activeTab == 0 || activeTab == 3) {
+                // 加载方块/矿石注册表
+                for (ResourceLocation loc : ForgeRegistries.BLOCKS.getKeys()) {
+                    Block block = ForgeRegistries.BLOCKS.getValue(loc);
+                    if (block != null) {
+                        String fullId = loc.toString();
+                        String cnName = ChineseNameMapper.getBlockName(block, fullId);
+                        currentList.add(new TargetItem(fullId, cnName, 1));
+                    }
                 }
             }
-        }
-        if (activeTab == 0 || activeTab == 3) {
-            // 加载物品/掉落物注册表
-            for (ResourceLocation loc : ForgeRegistries.ITEMS.getKeys()) {
-                Item item = ForgeRegistries.ITEMS.getValue(loc);
-                if (item != null) {
-                    String fullId = loc.toString();
-                    String cnName = ChineseNameMapper.getItemName(item, fullId);
-                    currentList.add(new TargetItem(fullId, cnName, 2));
+            if (activeTab == 0 || activeTab == 4) {
+                // 加载物品/掉落物注册表
+                for (ResourceLocation loc : ForgeRegistries.ITEMS.getKeys()) {
+                    Item item = ForgeRegistries.ITEMS.getValue(loc);
+                    if (item != null) {
+                        String fullId = loc.toString();
+                        String cnName = ChineseNameMapper.getItemName(item, fullId);
+                        currentList.add(new TargetItem(fullId, cnName, 2));
+                    }
                 }
             }
         }
@@ -210,8 +255,9 @@ public class TrackerScreen extends Screen {
 
     private void enableAllFiltered() {
         for (TargetItem item : filteredList) {
-            setTracked(item, true, getColor(item));
+            setTrackedGrouped(item, true, getColor(item));
         }
+        TrackerConfig.saveConfig();
         rebuildWidgets();
     }
 
@@ -234,23 +280,35 @@ public class TrackerScreen extends Screen {
         for (String id : chests) {
             TrackerConfig.toggleBlock(id, true, 0xFFFFFF00);
         }
+        TrackerConfig.saveConfig();
+        rebuildWidgets();
+    }
+
+    private void clearAllTracked() {
+        TrackerConfig.trackedEntities.clear();
+        TrackerConfig.trackedBlocks.clear();
+        TrackerConfig.trackedItems.clear();
+        TrackerConfig.saveConfig();
         rebuildWidgets();
     }
 
     private void clearCurrentTab() {
-        if (activeTab == 0) {
+        if (activeTab == 0 || activeTab == 1) {
+            clearAllTracked();
+        } else if (activeTab == 2) {
             TrackerConfig.trackedEntities.clear();
+        } else if (activeTab == 3) {
             TrackerConfig.trackedBlocks.clear();
+        } else if (activeTab == 4) {
             TrackerConfig.trackedItems.clear();
-        } else if (activeTab == 1) TrackerConfig.trackedEntities.clear();
-        else if (activeTab == 2) TrackerConfig.trackedBlocks.clear();
-        else if (activeTab == 3) TrackerConfig.trackedItems.clear();
+        }
+        TrackerConfig.saveConfig();
         rebuildWidgets();
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (this.activeTab != 4 && !filteredList.isEmpty()) {
+        if (this.activeTab != 5 && !filteredList.isEmpty()) {
             if (delta < 0 && scrollOffset < filteredList.size() - VISIBLE_ITEMS) {
                 scrollOffset++;
                 return true;
@@ -268,7 +326,7 @@ public class TrackerScreen extends Screen {
         int guiLeft = centerX - 195;
         int guiTop = 15;
 
-        if (this.activeTab != 4 && button == 0) {
+        if (this.activeTab != 5 && button == 0) {
             int listTop = guiTop + 55;
             for (int i = 0; i < VISIBLE_ITEMS; i++) {
                 int index = scrollOffset + i;
@@ -280,7 +338,8 @@ public class TrackerScreen extends Screen {
                 if (mouseX >= guiLeft + 270 && mouseX <= guiLeft + 325 && mouseY >= itemY + 2 && mouseY <= itemY + ITEM_HEIGHT - 4) {
                     boolean tracked = isTracked(item);
                     int curColor = getColor(item);
-                    setTracked(item, !tracked, curColor);
+                    setTrackedGrouped(item, !tracked, curColor);
+                    rebuildWidgets();
                     return true;
                 }
 
@@ -288,7 +347,8 @@ public class TrackerScreen extends Screen {
                 if (mouseX >= guiLeft + 330 && mouseX <= guiLeft + 375 && mouseY >= itemY + 2 && mouseY <= itemY + ITEM_HEIGHT - 4) {
                     int curColor = getColor(item);
                     int nextColor = TrackerConfig.getNextColor(curColor);
-                    setTracked(item, true, nextColor);
+                    setTrackedGrouped(item, true, nextColor);
+                    rebuildWidgets();
                     return true;
                 }
             }
@@ -308,10 +368,82 @@ public class TrackerScreen extends Screen {
         return TrackerConfig.getItemColor(item.id);
     }
 
-    private void setTracked(TargetItem item, boolean track, int color) {
-        if (item.category == 0) TrackerConfig.toggleEntity(item.id, track, color);
-        else if (item.category == 1) TrackerConfig.toggleBlock(item.id, track, color);
-        else TrackerConfig.toggleItem(item.id, track, color);
+    private void setTrackedGrouped(TargetItem item, boolean track, int color) {
+        String lowerId = item.id.toLowerCase(Locale.ROOT);
+        String lowerName = item.chineseName.toLowerCase(Locale.ROOT);
+
+        // 1. 判断是否为【箱子/宝箱/木桶/容器类】组 (同类自动联动全选/取消)
+        boolean isChestGroup = lowerId.contains("chest") || lowerId.contains("barrel") || lowerId.contains("shulker")
+                || lowerId.contains("lootr") || lowerId.contains("storage") || lowerId.contains("box")
+                || lowerName.contains("箱") || lowerName.contains("宝箱");
+
+        // 2. 判断是否为【矿石/残骸类】组
+        boolean isOreGroup = lowerId.contains("ore") || lowerId.contains("debris") || lowerName.contains("矿");
+
+        // 3. 判断是否为【僵尸/敌对怪类】组
+        boolean isMonsterGroup = lowerId.contains("zombie") || lowerId.contains("skeleton") || lowerId.contains("creeper")
+                || lowerId.contains("mimic") || lowerName.contains("僵尸") || lowerName.contains("骷髅")
+                || lowerName.contains("苦力怕") || lowerName.contains("宝箱怪");
+
+        if (isChestGroup) {
+            // 联动全选/取消全图所有箱子类与宝箱怪
+            enableAllChestsAndMimicsGroup(track, color);
+        } else if (isOreGroup) {
+            enableAllOresGroup(track, color);
+        } else if (isMonsterGroup) {
+            enableAllMonstersGroup(track, color);
+        } else {
+            // 普通单个目标设置
+            if (item.category == 0) TrackerConfig.toggleEntity(item.id, track, color);
+            else if (item.category == 1) TrackerConfig.toggleBlock(item.id, track, color);
+            else TrackerConfig.toggleItem(item.id, track, color);
+        }
+        TrackerConfig.saveConfig();
+    }
+
+    private void enableAllChestsAndMimicsGroup(boolean track, int color) {
+        String[] mimics = {
+                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic"
+        };
+        for (String id : mimics) {
+            TrackerConfig.toggleEntity(id, track, color);
+        }
+
+        String[] chests = {
+                "minecraft:chest", "minecraft:trapped_chest", "minecraft:ender_chest", "minecraft:barrel",
+                "lootr:lootr_chest", "lootr:lootr_trapped_chest", "lootr:lootr_barrel", "lootr:lootr_inventory",
+                "sophisticatedstorage:chest", "sophisticatedstorage:barrel",
+                "aquamirae:frozen_chest", "avaritia:compressed_chest"
+        };
+        for (String id : chests) {
+            TrackerConfig.toggleBlock(id, track, color);
+        }
+    }
+
+    private void enableAllOresGroup(boolean track, int color) {
+        String[] ores = {
+                "minecraft:diamond_ore", "minecraft:deepslate_diamond_ore",
+                "minecraft:ancient_debris", "minecraft:spawner",
+                "minecraft:emerald_ore", "minecraft:deepslate_emerald_ore",
+                "minecraft:gold_ore", "minecraft:deepslate_gold_ore",
+                "minecraft:iron_ore", "minecraft:deepslate_iron_ore"
+        };
+        for (String id : ores) {
+            TrackerConfig.toggleBlock(id, track, color);
+        }
+    }
+
+    private void enableAllMonstersGroup(boolean track, int color) {
+        String[] hostiles = {
+                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic",
+                "minecraft:zombie", "minecraft:skeleton", "minecraft:creeper", "minecraft:spider",
+                "minecraft:enderman", "minecraft:witch", "minecraft:phantom", "minecraft:drowned",
+                "minecraft:husk", "minecraft:stray", "minecraft:wither_skeleton", "minecraft:blaze",
+                "minecraft:ghast", "minecraft:ender_dragon", "minecraft:wither"
+        };
+        for (String id : hostiles) {
+            TrackerConfig.toggleEntity(id, track, color);
+        }
     }
 
     @Override
@@ -327,7 +459,7 @@ public class TrackerScreen extends Screen {
         graphics.fill(guiLeft, guiTop, guiLeft + 390, guiTop + 240, 0xF514141E);
         graphics.renderOutline(guiLeft, guiTop, 390, 240, 0xFF4A4A66);
 
-        if (this.activeTab != 4) {
+        if (this.activeTab != 5) {
             // 输入框高亮焦点发光边框
             if (this.searchBox != null && this.searchBox.isFocused()) {
                 graphics.renderOutline(guiLeft + 9, guiTop + 31, 372, 20, 0xFF00E5FF);
