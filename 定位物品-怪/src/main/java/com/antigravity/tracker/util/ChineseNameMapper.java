@@ -13,12 +13,17 @@ public class ChineseNameMapper {
     private static final Map<String, String> ALIAS_MAP = new HashMap<>();
 
     static {
-        // 宝箱怪 (Mimic) 别名映射 (会咬人/攻击人的箱子怪物)
+        // 宝箱怪 (Mimic) 别名映射 (动态怪物实体 + 静止伪装宝箱方块)
         ALIAS_MAP.put("artifacts:mimic", "宝箱怪 (会咬人的假宝箱)");
+        ALIAS_MAP.put("artifacts:mimic_chest", "宝箱怪 (静止伪装箱)");
         ALIAS_MAP.put("faded_conquest_2:mimic", "惊骇宝箱怪 (会咬人的假宝箱)");
+        ALIAS_MAP.put("faded_conquest_2:mimic_chest", "惊骇宝箱怪 (静止伪装箱)");
         ALIAS_MAP.put("grimoireofgaia:mimic", "虚伪宝箱怪 (盖亚宝箱怪)");
+        ALIAS_MAP.put("grimoireofgaia:mimic_chest", "虚伪宝箱怪 (静止伪装箱)");
         ALIAS_MAP.put("aether:mimic", "以太宝箱怪 (以太假宝箱)");
+        ALIAS_MAP.put("aether:mimic_chest", "以太宝箱怪 (静止伪装箱)");
         ALIAS_MAP.put("mowziesmobs:mimic", "密室宝箱怪 (Mowzie假宝箱)");
+        ALIAS_MAP.put("mowziesmobs:mimic_chest", "密室宝箱怪 (静止伪装箱)");
         ALIAS_MAP.put("alexsmobs:mimicube", "拟态拟方怪 (Alex假宝箱)");
 
         // 常用怪物别名

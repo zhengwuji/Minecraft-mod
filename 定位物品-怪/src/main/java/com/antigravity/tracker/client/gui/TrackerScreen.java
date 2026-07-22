@@ -96,7 +96,7 @@ public class TrackerScreen extends Screen {
                 this.addRenderableWidget(Button.builder(Component.literal("一键全关所有已追踪目标"), btn -> clearAllTracked())
                         .bounds(guiLeft + 10, guiTop + 208, 175, 20).build());
 
-                this.addRenderableWidget(Button.builder(Component.literal("👾 一键全开宝箱怪(咬人假箱)"), btn -> enableAllChestsAndMimics())
+                this.addRenderableWidget(Button.builder(Component.literal("👾 一键全开宝箱怪(含静止伪装)"), btn -> enableAllChestsAndMimics())
                         .bounds(guiLeft + 190, guiTop + 208, 190, 20).build());
             } else {
                 // 底部一键预设快捷按钮行
@@ -104,7 +104,7 @@ public class TrackerScreen extends Screen {
                 this.addRenderableWidget(Button.builder(Component.literal(btnText), btn -> enableAllFiltered())
                         .bounds(guiLeft + 10, guiTop + 208, 160, 20).build());
 
-                this.addRenderableWidget(Button.builder(Component.literal("👾 一键全开宝箱怪(咬人箱)"), btn -> enableAllChestsAndMimics())
+                this.addRenderableWidget(Button.builder(Component.literal("👾 一键全开宝箱怪(含静止)"), btn -> enableAllChestsAndMimics())
                         .bounds(guiLeft + 175, guiTop + 208, 140, 20).build());
 
                 this.addRenderableWidget(Button.builder(Component.literal("清空当前页"), btn -> clearCurrentTab())
@@ -273,15 +273,27 @@ public class TrackerScreen extends Screen {
     }
 
     private void enableAllChestsAndMimics() {
-        // 开启全模组怪物宝箱怪 (会咬人的伪装宝箱)
-        String[] mimics = {
-                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic", "alexsmobs:mimicube"
+        // 开启全模组怪物宝箱怪 (涵盖动态实体 + 静止伪装宝箱方块双重形态)
+        String[] mimicEntities = {
+                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic",
+                "aether:mimic", "mowziesmobs:mimic", "alexsmobs:mimicube", "dungeons_mobs:mimic"
         };
-        for (String id : mimics) {
+        for (String id : mimicEntities) {
             TrackerConfig.toggleEntity(id, true, 0xFFFF0000);
         }
 
-        // 开启方块箱子类与战利品箱
+        String[] mimicBlocks = {
+                "artifacts:mimic", "artifacts:mimic_chest",
+                "faded_conquest_2:mimic", "faded_conquest_2:mimic_chest",
+                "grimoireofgaia:mimic", "grimoireofgaia:mimic_chest",
+                "aether:mimic", "aether:mimic_chest",
+                "mowziesmobs:mimic", "mowziesmobs:mimic_chest", "alexsmobs:mimicube"
+        };
+        for (String id : mimicBlocks) {
+            TrackerConfig.toggleBlock(id, true, 0xFFFF0000);
+        }
+
+        // 开启常规与模组战利品箱
         String[] chests = {
                 "minecraft:chest", "minecraft:trapped_chest", "minecraft:ender_chest", "minecraft:barrel",
                 "lootr:lootr_chest", "lootr:lootr_trapped_chest", "lootr:lootr_barrel", "lootr:lootr_inventory",
@@ -396,6 +408,14 @@ public class TrackerScreen extends Screen {
         if (item.category == 0) TrackerConfig.toggleEntity(item.id, track, color);
         else if (item.category == 1) TrackerConfig.toggleBlock(item.id, track, color);
         else TrackerConfig.toggleItem(item.id, track, color);
+
+        // 如果开启/关闭的是宝箱怪 (Mimic)，同时将其【静止沉睡伪装方块形态】加入/移出追查库，实现静止状态 360° 无死角透视！
+        if (item.id.contains("mimic")) {
+            TrackerConfig.toggleBlock(item.id, track, color);
+            TrackerConfig.toggleBlock(item.id + "_chest", track, color);
+            TrackerConfig.toggleEntity(item.id, track, color);
+        }
+
         TrackerConfig.saveConfig();
     }
 

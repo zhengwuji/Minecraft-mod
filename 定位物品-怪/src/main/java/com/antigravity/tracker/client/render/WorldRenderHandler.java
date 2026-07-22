@@ -231,7 +231,7 @@ public class WorldRenderHandler {
             }
         }
 
-        // 2. 绘制缓存的方块/宝箱/矿石 3D 透视边框与射线
+        // 2. 绘制缓存的方块/宝箱/矿石/静止伪装箱 3D 透视边框与射线
         synchronized (CACHED_BLOCK_TARGETS) {
             BlockPos pPos = player.blockPosition();
             double maxDistSq = TrackerConfig.maxDistance * TrackerConfig.maxDistance;
@@ -356,7 +356,7 @@ public class WorldRenderHandler {
         drawLine(consumer, mat, minX, maxY, minZ, maxX, maxY, minZ, r, g, b, a);
         drawLine(consumer, mat, maxX, maxY, minZ, maxX, maxY, maxZ, r, g, b, a);
         drawLine(consumer, mat, maxX, maxY, maxZ, minX, maxY, maxZ, r, g, b, a);
-        drawLine(consumer, mat, minX, maxY, maxZ, minX, maxY, minZ, r, g, b, a);
+        drawLine(consumer, mat, minX, maxY, minZ, minX, maxY, minZ, r, g, b, a);
 
         drawLine(consumer, mat, minX, minY, minZ, minX, maxY, minZ, r, g, b, a);
         drawLine(consumer, mat, maxX, minY, minZ, maxX, maxY, minZ, r, g, b, a);
