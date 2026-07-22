@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="debuglogger"
+version="1.0.0"
+displayName="调试日志"
+authors="Antigravity"
+description='''
+开发者专属完整日志捕获与运行调试监控模组 (Developer Debug Logger)。支持全量日志搜集、断言/崩溃事件防护与一键提取报告。
+'''
+
+[[dependencies.debuglogger]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47.4.13,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.debuglogger]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"

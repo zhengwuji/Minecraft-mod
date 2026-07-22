@@ -1,8 +1,7 @@
-package com.antigravity.quadhotbar.client;
+package com.antigravity.debuglogger.client;
 
-import com.antigravity.quadhotbar.QuadHotbar;
-import com.antigravity.quadhotbar.network.NetworkHandler;
-import com.antigravity.quadhotbar.network.PacketSwitchHotbar;
+import com.antigravity.debuglogger.DebugLogger;
+import com.antigravity.debuglogger.util.LogCollector;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -15,21 +14,14 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.glfw.GLFW;
 
-@Mod.EventBusSubscriber(modid = QuadHotbar.MOD_ID, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = DebugLogger.MOD_ID, value = Dist.CLIENT)
 public class KeyInputHandler {
 
-    public static final KeyMapping KEY_NEXT_HOTBAR = new KeyMapping(
-            "key.quadhotbar.next_row",
+    public static final KeyMapping KEY_EXPORT_LOG = new KeyMapping(
+            "key.debuglogger.export_log",
             InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_V,
-            "key.categories.quadhotbar"
-    );
-
-    public static final KeyMapping KEY_PREV_HOTBAR = new KeyMapping(
-            "key.quadhotbar.prev_row",
-            InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_B,
-            "key.categories.quadhotbar"
+            GLFW.GLFW_KEY_F9,
+            "key.categories.debuglogger"
     );
 
     private static Minecraft getMinecraft() {
@@ -70,20 +62,18 @@ public class KeyInputHandler {
     }
 
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
-        event.register(KEY_NEXT_HOTBAR);
-        event.register(KEY_PREV_HOTBAR);
+        event.register(KEY_EXPORT_LOG);
     }
 
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
         Minecraft mc = getMinecraft();
         if (mc == null) return;
-        if (getPlayer(mc) == null || getScreen(mc) != null) return;
+        Player player = getPlayer(mc);
+        if (player == null || getScreen(mc) != null) return;
 
-        if (KEY_NEXT_HOTBAR.consumeClick()) {
-            NetworkHandler.CHANNEL.sendToServer(new PacketSwitchHotbar(1));
-        } else if (KEY_PREV_HOTBAR.consumeClick()) {
-            NetworkHandler.CHANNEL.sendToServer(new PacketSwitchHotbar(-1));
+        if (KEY_EXPORT_LOG.consumeClick()) {
+            LogCollector.exportDevReport(player);
         }
     }
 }
