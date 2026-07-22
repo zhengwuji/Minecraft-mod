@@ -20,7 +20,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -100,7 +100,7 @@ public class WorldRenderHandler {
                                 LevelChunk chunk = level.getChunkSource().getChunk(cx, cz, false);
                                 if (chunk == null) continue;
 
-                                // A. 扫描 BlockEntity (全模组箱子、Lootr战利品箱、木桶、刷怪笼、精妙背包等)
+                                // A. 扫描 BlockEntity (宝箱、Lootr战利品箱、木桶、刷怪笼、精妙背包等)
                                 for (Map.Entry<BlockPos, BlockEntity> entry : chunk.getBlockEntities().entrySet()) {
                                     BlockPos bPos = entry.getKey();
                                     if (bPos.distSqr(pPos) > maxDist * maxDist) continue;
@@ -266,62 +266,18 @@ public class WorldRenderHandler {
     }
 
     private static boolean isEntityTracked(String id) {
-        if (TrackerConfig.trackedEntities.containsKey(id)) return true;
-        if (TrackerConfig.trackedEntities.containsKey("minecraft:zombie")) {
-            if (id.contains("mimic") || id.contains("zombie") || id.contains("skeleton") || id.contains("creeper")) return true;
-        }
-        return false;
+        // 严格 1 对 1 精确匹配
+        return TrackerConfig.trackedEntities.containsKey(id);
     }
 
     private static boolean isItemTracked(String id) {
+        // 严格 1 对 1 精确匹配
         return TrackerConfig.trackedItems.containsKey(id);
     }
 
     public static boolean isBlockTracked(String bId, Block block, BlockState state) {
-        if (TrackerConfig.trackedBlocks.containsKey(bId)) return true;
-
-        String lowerId = bId.toLowerCase(Locale.ROOT);
-
-        // 如果开启了任何箱子/宝箱相关的追查目标
-        boolean chestTracked = false;
-        for (String key : TrackerConfig.trackedBlocks.keySet()) {
-            String lKey = key.toLowerCase(Locale.ROOT);
-            if (lKey.contains("chest") || lKey.contains("barrel") || lKey.contains("box") || lKey.contains("storage") || lKey.contains("箱子") || lKey.contains("宝箱")) {
-                chestTracked = true;
-                break;
-            }
-        }
-
-        if (chestTracked) {
-            if (lowerId.contains("chest") || lowerId.contains("barrel") || lowerId.contains("shulker") || lowerId.contains("lootr") || lowerId.contains("storage") || lowerId.contains("crate") || lowerId.contains("vault")) {
-                return true;
-            }
-            if (block instanceof AbstractChestBlock || block instanceof ChestBlock || block instanceof EnderChestBlock || block instanceof BarrelBlock || block instanceof ShulkerBoxBlock) {
-                return true;
-            }
-        }
-
-        // 刷怪笼通配
-        boolean spawnerTracked = false;
-        for (String key : TrackerConfig.trackedBlocks.keySet()) {
-            if (key.contains("spawner")) {
-                spawnerTracked = true;
-                break;
-            }
-        }
-        if (spawnerTracked && lowerId.contains("spawner")) return true;
-
-        // 矿石通配
-        boolean oreTracked = false;
-        for (String key : TrackerConfig.trackedBlocks.keySet()) {
-            if (key.contains("ore") || key.contains("debris")) {
-                oreTracked = true;
-                break;
-            }
-        }
-        if (oreTracked && (lowerId.contains("ore") || lowerId.contains("debris"))) return true;
-
-        return false;
+        // 严格 1 对 1 精确匹配：删除任何模糊通配逻辑
+        return TrackerConfig.trackedBlocks.containsKey(bId);
     }
 
     private static void renderColorBox(PoseStack poseStack, VertexConsumer consumer, AABB box, int color) {
