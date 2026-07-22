@@ -17,7 +17,7 @@ import java.util.*;
 
 public class TrackerScreen extends Screen {
     private EditBox searchBox;
-    private int activeTab = 0; // 0: 实体/怪物, 1: 方块/矿石, 2: 物品/掉落物, 3: 设置
+    private int activeTab = 0; // 0: 全局, 1: 怪物实体, 2: 方块矿石, 3: 物品掉落, 4: 设置
 
     private final List<TargetItem> currentList = new ArrayList<>();
     private final List<TargetItem> filteredList = new ArrayList<>();
@@ -35,6 +35,12 @@ public class TrackerScreen extends Screen {
             this.chineseName = chineseName;
             this.category = category;
         }
+
+        public String getCategoryBadge() {
+            if (category == 0) return "[👾怪]";
+            if (category == 1) return "[📦块]";
+            return "[💎物]";
+        }
     }
 
     public TrackerScreen() {
@@ -48,42 +54,45 @@ public class TrackerScreen extends Screen {
         int guiLeft = centerX - 195;
         int guiTop = 15;
 
-        // 顶部 4 大功能页签按钮
-        this.addRenderableWidget(Button.builder(Component.literal("👾 怪物与实体"), btn -> switchTab(0))
-                .bounds(guiLeft + 10, guiTop + 6, 85, 20).build());
+        // 顶部 5 大功能页签按钮
+        this.addRenderableWidget(Button.builder(Component.literal("🔍 全局"), btn -> switchTab(0))
+                .bounds(guiLeft + 5, guiTop + 6, 65, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("📦 方块与矿石"), btn -> switchTab(1))
-                .bounds(guiLeft + 100, guiTop + 6, 85, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("👾 怪物实体"), btn -> switchTab(1))
+                .bounds(guiLeft + 75, guiTop + 6, 75, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("💎 物品与掉落物"), btn -> switchTab(2))
-                .bounds(guiLeft + 190, guiTop + 6, 95, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("📦 方块矿石"), btn -> switchTab(2))
+                .bounds(guiLeft + 155, guiTop + 6, 75, 20).build());
 
-        this.addRenderableWidget(Button.builder(Component.literal("⚙️ 全局设置"), btn -> switchTab(3))
-                .bounds(guiLeft + 290, guiTop + 6, 90, 20).build());
+        this.addRenderableWidget(Button.builder(Component.literal("💎 物品掉落"), btn -> switchTab(3))
+                .bounds(guiLeft + 235, guiTop + 6, 75, 20).build());
 
-        if (this.activeTab != 3) {
+        this.addRenderableWidget(Button.builder(Component.literal("⚙️ 设置"), btn -> switchTab(4))
+                .bounds(guiLeft + 315, guiTop + 6, 68, 20).build());
+
+        if (this.activeTab != 4) {
             // 搜索框
             this.searchBox = new EditBox(this.font, guiLeft + 10, guiTop + 32, 370, 18, Component.literal("Search"));
             this.searchBox.setMaxLength(100);
-            this.searchBox.setHint(Component.literal("🔍 输入名称或ID (如 僵尸, 钻石, 宝箱, zombie, diamond)..."));
+            this.searchBox.setHint(Component.literal("🔍 输入名称或ID (如 宝箱怪, 宝箱, 僵尸, 钻石, mimic, zombie)..."));
             this.searchBox.setTextColor(0xFFFFFF);
             this.searchBox.setResponder(text -> filterList());
             this.addRenderableWidget(this.searchBox);
 
             // 底部一键预设快捷按钮行
-            if (this.activeTab == 0) {
-                this.addRenderableWidget(Button.builder(Component.literal("一键全开敌对怪"), btn -> enableAllHostileMonsters())
-                        .bounds(guiLeft + 10, guiTop + 208, 95, 20).build());
-            } else if (this.activeTab == 1) {
-                this.addRenderableWidget(Button.builder(Component.literal("一键全开常见矿石"), btn -> enableAllOres())
-                        .bounds(guiLeft + 10, guiTop + 208, 95, 20).build());
+            if (this.activeTab == 0 || this.activeTab == 1) {
+                this.addRenderableWidget(Button.builder(Component.literal("一键全开宝箱怪与敌对怪"), btn -> enableAllHostileMonsters())
+                        .bounds(guiLeft + 10, guiTop + 208, 140, 20).build());
             } else if (this.activeTab == 2) {
+                this.addRenderableWidget(Button.builder(Component.literal("一键全开常见矿石"), btn -> enableAllOres())
+                        .bounds(guiLeft + 10, guiTop + 208, 110, 20).build());
+            } else if (this.activeTab == 3) {
                 this.addRenderableWidget(Button.builder(Component.literal("一键全开贵重物品"), btn -> enableAllValuableItems())
-                        .bounds(guiLeft + 10, guiTop + 208, 95, 20).build());
+                        .bounds(guiLeft + 10, guiTop + 208, 110, 20).build());
             }
 
             this.addRenderableWidget(Button.builder(Component.literal("清空当前页追踪"), btn -> clearCurrentTab())
-                    .bounds(guiLeft + 285, guiTop + 208, 95, 20).build());
+                    .bounds(guiLeft + 275, guiTop + 208, 105, 20).build());
         } else {
             // 设置页签控制控件
             String statusText = TrackerConfig.enabled ? "全局定位追踪: [已开启]" : "全局定位追踪: [已关闭]";
@@ -131,7 +140,7 @@ public class TrackerScreen extends Screen {
 
     private void loadTabItems() {
         currentList.clear();
-        if (activeTab == 0) {
+        if (activeTab == 0 || activeTab == 1) {
             // 加载实体/怪物注册表
             for (ResourceLocation loc : ForgeRegistries.ENTITY_TYPES.getKeys()) {
                 EntityType<?> type = ForgeRegistries.ENTITY_TYPES.getValue(loc);
@@ -141,7 +150,8 @@ public class TrackerScreen extends Screen {
                     currentList.add(new TargetItem(fullId, cnName, 0));
                 }
             }
-        } else if (activeTab == 1) {
+        }
+        if (activeTab == 0 || activeTab == 2) {
             // 加载方块/矿石注册表
             for (ResourceLocation loc : ForgeRegistries.BLOCKS.getKeys()) {
                 Block block = ForgeRegistries.BLOCKS.getValue(loc);
@@ -151,7 +161,8 @@ public class TrackerScreen extends Screen {
                     currentList.add(new TargetItem(fullId, cnName, 1));
                 }
             }
-        } else if (activeTab == 2) {
+        }
+        if (activeTab == 0 || activeTab == 3) {
             // 加载物品/掉落物注册表
             for (ResourceLocation loc : ForgeRegistries.ITEMS.getKeys()) {
                 Item item = ForgeRegistries.ITEMS.getValue(loc);
@@ -178,6 +189,7 @@ public class TrackerScreen extends Screen {
 
     private void enableAllHostileMonsters() {
         String[] hostiles = {
+                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic",
                 "minecraft:zombie", "minecraft:skeleton", "minecraft:creeper", "minecraft:spider",
                 "minecraft:enderman", "minecraft:witch", "minecraft:phantom", "minecraft:drowned",
                 "minecraft:husk", "minecraft:stray", "minecraft:wither_skeleton", "minecraft:blaze",
@@ -212,14 +224,18 @@ public class TrackerScreen extends Screen {
     }
 
     private void clearCurrentTab() {
-        if (activeTab == 0) TrackerConfig.trackedEntities.clear();
-        else if (activeTab == 1) TrackerConfig.trackedBlocks.clear();
-        else if (activeTab == 2) TrackerConfig.trackedItems.clear();
+        if (activeTab == 0) {
+            TrackerConfig.trackedEntities.clear();
+            TrackerConfig.trackedBlocks.clear();
+            TrackerConfig.trackedItems.clear();
+        } else if (activeTab == 1) TrackerConfig.trackedEntities.clear();
+        else if (activeTab == 2) TrackerConfig.trackedBlocks.clear();
+        else if (activeTab == 3) TrackerConfig.trackedItems.clear();
     }
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (this.activeTab != 3 && !filteredList.isEmpty()) {
+        if (this.activeTab != 4 && !filteredList.isEmpty()) {
             if (delta < 0 && scrollOffset < filteredList.size() - VISIBLE_ITEMS) {
                 scrollOffset++;
                 return true;
@@ -237,7 +253,7 @@ public class TrackerScreen extends Screen {
         int guiLeft = centerX - 195;
         int guiTop = 15;
 
-        if (this.activeTab != 3 && button == 0) {
+        if (this.activeTab != 4 && button == 0) {
             int listTop = guiTop + 55;
             for (int i = 0; i < VISIBLE_ITEMS; i++) {
                 int index = scrollOffset + i;
@@ -296,7 +312,7 @@ public class TrackerScreen extends Screen {
         graphics.fill(guiLeft, guiTop, guiLeft + 390, guiTop + 240, 0xF514141E);
         graphics.renderOutline(guiLeft, guiTop, 390, 240, 0xFF4A4A66);
 
-        if (this.activeTab != 3) {
+        if (this.activeTab != 4) {
             // 输入框高亮焦点发光边框
             if (this.searchBox != null && this.searchBox.isFocused()) {
                 graphics.renderOutline(guiLeft + 9, guiTop + 31, 372, 20, 0xFF00E5FF);
@@ -319,8 +335,8 @@ public class TrackerScreen extends Screen {
                 int bgColor = isTracked ? 0xFF1E3A20 : (i % 2 == 0 ? 0xFF141420 : 0xFF191928);
                 graphics.fill(guiLeft + 10, itemY, guiLeft + 380, itemY + ITEM_HEIGHT - 2, bgColor);
 
-                // 显示名称与注册 ID
-                String titleText = item.chineseName + " (" + item.id + ")";
+                // 显示类型标识与中文名称 + 注册 ID
+                String titleText = item.getCategoryBadge() + " " + item.chineseName + " (" + item.id + ")";
                 if (titleText.length() > 32) titleText = titleText.substring(0, 30) + "..";
                 graphics.drawString(this.font, titleText, guiLeft + 15, itemY + 6, isTracked ? 0x55FF55 : 0xCCCCCC);
 
