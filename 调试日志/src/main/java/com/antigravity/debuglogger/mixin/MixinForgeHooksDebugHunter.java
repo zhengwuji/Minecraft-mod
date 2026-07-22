@@ -15,12 +15,27 @@ public class MixinForgeHooksDebugHunter {
         if (stack == null) return 0;
         try {
             return stack.getCount();
-        } catch (NoSuchMethodError e) {
+        } catch (Throwable e) {
             try {
                 java.lang.reflect.Method m = ItemStack.class.getMethod("m_41613_");
                 return (Integer) m.invoke(stack);
             } catch (Throwable t) {
                 return 1;
+            }
+        }
+    }
+
+    private static String getSafeItemName(ItemStack stack) {
+        if (stack == null) return "null";
+        try {
+            return stack.getItem().toString();
+        } catch (Throwable t1) {
+            try {
+                java.lang.reflect.Method m = ItemStack.class.getMethod("m_41720_");
+                Object item = m.invoke(stack);
+                return item != null ? item.toString() : "unknown";
+            } catch (Throwable t2) {
+                return "unknown";
             }
         }
     }
@@ -31,12 +46,14 @@ public class MixinForgeHooksDebugHunter {
             require = 0
     )
     private static int bypassStackCountCheck1(ItemStack stack) {
-        int count = getStackCount(stack);
-        if (stack != null && count != 1) {
-            String detail = "捕获创造模式物品栏违规 Stack 检查: 物品=" + stack.getItem() + " | 数量=" + count;
-            LogCollector.recordInterceptedAssertion(detail);
-            DebugLogger.LOGGER.warn("[调试日志-HUNTER] 🎯 " + detail);
-        }
+        try {
+            int count = getStackCount(stack);
+            if (stack != null && count != 1) {
+                String detail = "捕获创造模式物品栏违规 Stack 检查: 物品=" + getSafeItemName(stack) + " | 数量=" + count;
+                LogCollector.recordInterceptedAssertion(detail);
+                DebugLogger.LOGGER.warn("[调试日志-HUNTER] 🎯 " + detail);
+            }
+        } catch (Throwable ignored) {}
         return 1;
     }
 
@@ -46,12 +63,14 @@ public class MixinForgeHooksDebugHunter {
             require = 0
     )
     private static int bypassStackCountCheck2(ItemStack stack) {
-        int count = getStackCount(stack);
-        if (stack != null && count != 1) {
-            String detail = "捕获创造模式物品栏违规 Stack 检查: 物品=" + stack.getItem() + " | 数量=" + count;
-            LogCollector.recordInterceptedAssertion(detail);
-            DebugLogger.LOGGER.warn("[调试日志-HUNTER] 🎯 " + detail);
-        }
+        try {
+            int count = getStackCount(stack);
+            if (stack != null && count != 1) {
+                String detail = "捕获创造模式物品栏违规 Stack 检查: 物品=" + getSafeItemName(stack) + " | 数量=" + count;
+                LogCollector.recordInterceptedAssertion(detail);
+                DebugLogger.LOGGER.warn("[调试日志-HUNTER] 🎯 " + detail);
+            }
+        } catch (Throwable ignored) {}
         return 1;
     }
 }
