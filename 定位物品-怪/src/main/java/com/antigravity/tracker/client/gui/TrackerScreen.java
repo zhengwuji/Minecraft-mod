@@ -55,6 +55,10 @@ public class TrackerScreen extends Screen {
         int guiLeft = centerX - 195;
         int guiTop = 15;
 
+        // 保存之前搜索框的内容与焦点
+        String prevSearchText = this.searchBox != null ? this.searchBox.getValue() : "";
+        int prevScroll = this.scrollOffset;
+
         // 顶部 6 大功能页签按钮
         this.addRenderableWidget(Button.builder(Component.literal("🔍 全局"), btn -> switchTab(0))
                 .bounds(guiLeft + 5, guiTop + 6, 55, 20).build());
@@ -80,7 +84,11 @@ public class TrackerScreen extends Screen {
             this.searchBox.setMaxLength(100);
             this.searchBox.setHint(Component.literal("🔍 输入名称或ID (如 宝箱怪, 宝箱, 僵尸, 钻石, mimic, zombie)..."));
             this.searchBox.setTextColor(0xFFFFFF);
-            this.searchBox.setResponder(text -> filterList());
+            this.searchBox.setValue(prevSearchText);
+            this.searchBox.setResponder(text -> {
+                this.scrollOffset = 0;
+                filterList();
+            });
             this.addRenderableWidget(this.searchBox);
 
             if (this.activeTab == 1) {
@@ -175,10 +183,12 @@ public class TrackerScreen extends Screen {
         }
 
         loadTabItems();
+        this.scrollOffset = Math.min(prevScroll, Math.max(0, filteredList.size() - VISIBLE_ITEMS));
     }
 
     private void switchTab(int tab) {
         this.activeTab = tab;
+        this.scrollOffset = 0;
         rebuildWidgets();
     }
 
@@ -250,7 +260,6 @@ public class TrackerScreen extends Screen {
                 filteredList.add(item);
             }
         }
-        this.scrollOffset = 0;
     }
 
     private void enableAllFiltered() {
@@ -258,7 +267,9 @@ public class TrackerScreen extends Screen {
             setTracked(item, true, getColor(item));
         }
         TrackerConfig.saveConfig();
-        rebuildWidgets();
+        if (activeTab == 1) {
+            loadTabItems();
+        }
     }
 
     private void enableAllChestsAndMimics() {
@@ -281,7 +292,9 @@ public class TrackerScreen extends Screen {
             TrackerConfig.toggleBlock(id, true, 0xFFFFFF00);
         }
         TrackerConfig.saveConfig();
-        rebuildWidgets();
+        if (activeTab == 1) {
+            loadTabItems();
+        }
     }
 
     private void clearAllTracked() {
@@ -289,7 +302,10 @@ public class TrackerScreen extends Screen {
         TrackerConfig.trackedBlocks.clear();
         TrackerConfig.trackedItems.clear();
         TrackerConfig.saveConfig();
-        rebuildWidgets();
+        if (activeTab == 1) {
+            loadTabItems();
+            scrollOffset = 0;
+        }
     }
 
     private void clearCurrentTab() {
@@ -303,7 +319,10 @@ public class TrackerScreen extends Screen {
             TrackerConfig.trackedItems.clear();
         }
         TrackerConfig.saveConfig();
-        rebuildWidgets();
+        if (activeTab == 1) {
+            loadTabItems();
+            scrollOffset = 0;
+        }
     }
 
     @Override
@@ -339,7 +358,13 @@ public class TrackerScreen extends Screen {
                     boolean tracked = isTracked(item);
                     int curColor = getColor(item);
                     setTracked(item, !tracked, curColor);
-                    rebuildWidgets();
+
+                    // 不重建界面 Widgets，保持当前搜索文字、滚动位置与焦点不动！
+                    if (this.activeTab == 1) {
+                        int savedScroll = this.scrollOffset;
+                        loadTabItems();
+                        this.scrollOffset = Math.min(savedScroll, Math.max(0, filteredList.size() - VISIBLE_ITEMS));
+                    }
                     return true;
                 }
 
@@ -348,7 +373,6 @@ public class TrackerScreen extends Screen {
                     int curColor = getColor(item);
                     int nextColor = TrackerConfig.getNextColor(curColor);
                     setTracked(item, true, nextColor);
-                    rebuildWidgets();
                     return true;
                 }
             }
