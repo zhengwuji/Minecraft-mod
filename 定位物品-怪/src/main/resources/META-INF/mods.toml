@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="itementitytracker"
+version="1.0.0"
+displayName="定位物品-怪"
+credits="Antigravity"
+authors="Antigravity"
+description='''
+按 F6 键唤出追踪 GUI，支持搜索并设置怪物、实体、方块与物品的高亮透视与实时距离显示。
+'''
+
+[[dependencies.itementitytracker]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.itementitytracker]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"

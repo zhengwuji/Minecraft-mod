@@ -15,6 +15,7 @@
 
 | 模组名称 | 中文标识 | 源码路径 | 核心功能概述 |
 | :--- | :--- | :--- | :--- |
+| **定位物品-怪** | `ItemEntityTracker` | [定位物品-怪](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA) | 默认 `F6` 可视化透视面板，支持搜索怪物、实体、方块、矿石与掉落物，视野中高亮框透视、连线与直线距离显示 |
 | **开发者辅助** | `DeveloperHelper` | [开发者辅助](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9) | 全模组自适应可视化 GUI 修改器（默认 `F7` 打开），实时检索与改写生命、护甲、幸运及全 MOD 注册属性数据 |
 | **调试日志** | `DebugLogger` | [调试日志](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97) | 开发者专属全量日志捕获、F9 诊断快照、断言崩盘自动拦截与容量管理 |
 | **多重快捷栏** | `QuadHotbar` | [多重快捷栏](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%A4%9A%E9%87%8D%E5%BF%AB%E6%8D%B7%E6%A0%8F) | 4 层 36 槽位原生单行快捷栏快捷轮换，内置 Lodestone / ModCompat 崩溃补丁 |
@@ -30,6 +31,21 @@
 ---
 
 ## 🔍 各 MOD 源码功能与详情使用手册
+
+### 0. 🎯 定位物品-怪 (`ItemEntityTracker`)
+
+#### 📌 源码组件说明
+- [ItemEntityTracker.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA/src/main/java/com/antigravity/tracker/ItemEntityTracker.java): 模组主入口类，初始化客户端与事件注册。
+- [TrackerScreen.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA/src/main/java/com/antigravity/tracker/client/gui/TrackerScreen.java): 可视化配置 GUI，包含【怪物与实体】、【方块与矿石】、【物品与掉落物】、【全局设置】4 大页签，支持实时搜索与 8 种高亮颜色自由切换。
+- [WorldRenderHandler.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA/src/main/java/com/antigravity/tracker/client/render/WorldRenderHandler.java): 3D 空间 ESP 渲染引擎，在视距范围内渲染实体/矿石彩框透视、追查连接射线与悬浮距离文本 (`[僵尸] 12.8m`)。
+- [TrackerConfig.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA/src/main/java/com/antigravity/tracker/config/TrackerConfig.java): 追踪数据配置映射与 8 种彩框调色盘。
+
+#### 🎮 使用方法
+- **快捷键开启**: 游戏内按 **`F6` 键** 唤出 `定位物品-怪` 可视化面板。
+- **自定义搜索与切换**: 搜索任意怪物（如 `僵尸`、`骷髅`）、矿石（如 `钻石`、`远古残骸`）或掉落物，一键点击开启追踪并点击切换色彩。
+- **3D 视野高亮与距离**: 关闭 GUI 后，视野中将实时显示彩框透视、追踪线与 `XX.Xm` 距离标引！
+
+---
 
 ### 1. 🛠️ 开发者辅助 (`DeveloperHelper`)
 
@@ -59,20 +75,23 @@
 如需对源码进行修改并重新打包为 Jar 文件：
 
 ```bash
-# 示例：编译打包 开发者辅助 MOD
-cd "D:\Plain Craft Launcher 2\开发mod源码\开发者辅助"
+# 示例：编译打包 定位物品-怪 MOD
+cd "D:\Plain Craft Launcher 2\开发mod源码\定位物品-怪"
 
 # 执行编译打包
 ./gradlew jar
 
 # 构建产物目录
-build/libs/DeveloperHelper-1.0.0.jar
+build/libs/ItemEntityTracker-1.0.0.jar
 ```
 
 ---
 
 ## 📜 维护与更新历史
 
+- **2026-07-23**:
+  - 新增全新自研模组 **【定位物品-怪 (`ItemEntityTracker`)】**：按 `F6` 键唤出可视化配置面板，支持对全模组怪物、实体、方块与掉落物进行搜索、高亮透视彩框、连接射线与 `XX.Xm` 距离标引。
+  - 将编译好的 `[定位物品-怪]ItemEntityTracker-1.0.0.jar` 打包部署至游戏 `mods/` 目录中。
 - **2026-07-22**:
   - 升级 **【随身食物BUFF背包 (`FoodBuffBag`)】**：正式突破仅限食物的限制，全面支持将**任意附魔装备/武器/防具/饰品/药水物品**直接放入仓库。放置在仓库内的同类附魔与同类 BUFF 实现了**全量无上限等级累加叠加机制**（例如：放入多件带【锋利 VI】或【力量 I】的装备/食物，对应【力量】BUFF 等级会自动相加升至 13 级以上！），向玩家持续施加强大的无上限永久增益 BUFF！
   - 新增全新自研模组 **【开发者辅助 (`DeveloperHelper`)】**：全模组自适应可视化属性与状态修改 GUI（默认按 `F7` 键唤出），支持生命、护甲、幸运及任意 MOD 注册属性的实时改写。

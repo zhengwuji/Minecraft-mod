@@ -1,6 +1,0 @@
-{
-  "key.categories.quadhotbar": "多重快捷栏",
-  "key.quadhotbar.next_row": "向下轮换快捷栏 (下一层)",
-  "key.quadhotbar.prev_row": "向上轮换快捷栏 (上一层)",
-  "msg.quadhotbar.switched": "§6[多重快捷栏] §f已切换至 §e第 %s 层 §7(槽位 %s~%s)"
-}
