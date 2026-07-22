@@ -96,19 +96,19 @@ public class TrackerScreen extends Screen {
                 this.addRenderableWidget(Button.builder(Component.literal("一键全关所有已追踪目标"), btn -> clearAllTracked())
                         .bounds(guiLeft + 10, guiTop + 208, 175, 20).build());
 
-                this.addRenderableWidget(Button.builder(Component.literal("一键全开全箱子与宝箱怪"), btn -> enableAllChestsAndMimics())
+                this.addRenderableWidget(Button.builder(Component.literal("👾 一键全开宝箱怪(咬人假箱)"), btn -> enableAllChestsAndMimics())
                         .bounds(guiLeft + 190, guiTop + 208, 190, 20).build());
             } else {
                 // 底部一键预设快捷按钮行
                 String btnText = "一键开启筛选出的 " + filteredList.size() + " 个目标";
                 this.addRenderableWidget(Button.builder(Component.literal(btnText), btn -> enableAllFiltered())
-                        .bounds(guiLeft + 10, guiTop + 208, 175, 20).build());
+                        .bounds(guiLeft + 10, guiTop + 208, 160, 20).build());
 
-                this.addRenderableWidget(Button.builder(Component.literal("一键全开全箱子与宝箱怪"), btn -> enableAllChestsAndMimics())
-                        .bounds(guiLeft + 190, guiTop + 208, 115, 20).build());
+                this.addRenderableWidget(Button.builder(Component.literal("👾 一键全开宝箱怪(咬人箱)"), btn -> enableAllChestsAndMimics())
+                        .bounds(guiLeft + 175, guiTop + 208, 140, 20).build());
 
                 this.addRenderableWidget(Button.builder(Component.literal("清空当前页"), btn -> clearCurrentTab())
-                        .bounds(guiLeft + 310, guiTop + 208, 70, 20).build());
+                        .bounds(guiLeft + 320, guiTop + 208, 60, 20).build());
             }
         } else {
             // 设置页签控制控件
@@ -273,9 +273,9 @@ public class TrackerScreen extends Screen {
     }
 
     private void enableAllChestsAndMimics() {
-        // 开启怪物宝箱怪
+        // 开启全模组怪物宝箱怪 (会咬人的伪装宝箱)
         String[] mimics = {
-                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic"
+                "artifacts:mimic", "faded_conquest_2:mimic", "grimoireofgaia:mimic", "aether:mimic", "mowziesmobs:mimic", "alexsmobs:mimicube"
         };
         for (String id : mimics) {
             TrackerConfig.toggleEntity(id, true, 0xFFFF0000);

@@ -13,13 +13,13 @@ public class ChineseNameMapper {
     private static final Map<String, String> ALIAS_MAP = new HashMap<>();
 
     static {
-        // 宝箱怪 (Mimic) 别名映射
-        ALIAS_MAP.put("artifacts:mimic", "宝箱怪 (Artifacts)");
-        ALIAS_MAP.put("faded_conquest_2:mimic", "惊骇宝箱怪");
-        ALIAS_MAP.put("grimoireofgaia:mimic", "虚伪宝箱怪");
-        ALIAS_MAP.put("aether:mimic", "以太宝箱怪");
-        ALIAS_MAP.put("mowziesmobs:mimic", "密室宝箱怪");
-        ALIAS_MAP.put("alexsmobs:mimicube", "拟态拟方怪");
+        // 宝箱怪 (Mimic) 别名映射 (会咬人/攻击人的箱子怪物)
+        ALIAS_MAP.put("artifacts:mimic", "宝箱怪 (会咬人的假宝箱)");
+        ALIAS_MAP.put("faded_conquest_2:mimic", "惊骇宝箱怪 (会咬人的假宝箱)");
+        ALIAS_MAP.put("grimoireofgaia:mimic", "虚伪宝箱怪 (盖亚宝箱怪)");
+        ALIAS_MAP.put("aether:mimic", "以太宝箱怪 (以太假宝箱)");
+        ALIAS_MAP.put("mowziesmobs:mimic", "密室宝箱怪 (Mowzie假宝箱)");
+        ALIAS_MAP.put("alexsmobs:mimicube", "拟态拟方怪 (Alex假宝箱)");
 
         // 常用怪物别名
         ALIAS_MAP.put("minecraft:zombie", "僵尸");
@@ -35,7 +35,7 @@ public class ChineseNameMapper {
         ALIAS_MAP.put("minecraft:diamond_ore", "钻石矿石");
         ALIAS_MAP.put("minecraft:deepslate_diamond_ore", "深片岩钻石矿石");
         ALIAS_MAP.put("minecraft:ancient_debris", "远古残骸");
-        ALIAS_MAP.put("minecraft:chest", "宝箱");
+        ALIAS_MAP.put("minecraft:chest", "普通静止宝箱 (非怪物)");
         ALIAS_MAP.put("minecraft:spawner", "刷怪笼");
     }
 
