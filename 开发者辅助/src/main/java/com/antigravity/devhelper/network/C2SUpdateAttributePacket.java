@@ -8,6 +8,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.Locale;
 import java.util.function.Supplier;
 
 public class C2SUpdateAttributePacket {
@@ -35,6 +36,21 @@ public class C2SUpdateAttributePacket {
             ServerPlayer player = ctx.getSender();
             if (player == null) return;
 
+            // 特殊处理 PMMO 技能 (如 pmmo:fishing, pmmo:combat 等)
+            if (this.attributeId.startsWith("pmmo:")) {
+                String skillName = this.attributeId.replace("pmmo:", "");
+                if (player.getServer() != null) {
+                    String cmd = String.format(Locale.ROOT, "pmmo admin %s level set %s %d",
+                            player.getScoreboardName(), skillName, (long) this.newBaseValue);
+                    player.getServer().getCommands().performPrefixedCommand(
+                            player.createCommandSourceStack().withPermission(4).withSuppressedOutput(),
+                            cmd
+                    );
+                }
+                return;
+            }
+
+            // 处理原生与其它 MOD 的 Attribute 属性
             ResourceLocation loc = ResourceLocation.tryParse(this.attributeId);
             if (loc != null && ForgeRegistries.ATTRIBUTES.containsKey(loc)) {
                 Attribute attribute = ForgeRegistries.ATTRIBUTES.getValue(loc);

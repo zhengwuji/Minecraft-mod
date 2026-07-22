@@ -34,7 +34,7 @@ public class DevHelperScreen extends Screen {
     private String statusMessage = "";
     private long statusTimer = 0;
 
-    // 内置常见与模组属性中文对照字典
+    // 内置常见与模组属性中文对照字典（包含 PMMO 全技能）
     private static final Map<String, String> CHINESE_MAP = Map.ofEntries(
             Map.entry("minecraft:generic.max_health", "❤️ 最大生命值"),
             Map.entry("minecraft:generic.knockback_resistance", "🛡️ 击退抗性"),
@@ -50,8 +50,40 @@ public class DevHelperScreen extends Screen {
             Map.entry("forge:entity_reach", "🗡️ 实体攻击距离"),
             Map.entry("forge:swim_speed", "🏊 游泳速度"),
             Map.entry("forge:nametag_distance", "🏷️ 名牌距离"),
-            Map.entry("forge:step_height_addition", "🪜 自动台阶高度")
+            Map.entry("forge:step_height_addition", "🪜 自动台阶高度"),
+
+            // PMMO 模组技能列表映射
+            Map.entry("pmmo:fishing", "🎣 钓鱼技能 [PMMO]"),
+            Map.entry("pmmo:combat", "⚔️ 战斗技能 [PMMO]"),
+            Map.entry("pmmo:slayer", "🥩 屠夫技能 [PMMO]"),
+            Map.entry("pmmo:hunter", "🏹 狩猎技能 [PMMO]"),
+            Map.entry("pmmo:sailing", "⛵ 航海技能 [PMMO]"),
+            Map.entry("pmmo:mining", "⛏️ 采掘技能 [PMMO]"),
+            Map.entry("pmmo:building", "🧱 建造技能 [PMMO]"),
+            Map.entry("pmmo:guns", "🔫 枪械技能 [PMMO]"),
+            Map.entry("pmmo:grace", "✨ 祈愿技能 [PMMO]"),
+            Map.entry("pmmo:swimming", "🏊 游泳技能 [PMMO]"),
+            Map.entry("pmmo:agility", "🏃 灵敏技能 [PMMO]"),
+            Map.entry("pmmo:woodcutting", "🪓 砍伐技能 [PMMO]"),
+            Map.entry("pmmo:excavation", "⛏️ 挖掘技能 [PMMO]"),
+            Map.entry("pmmo:magic", "🔮 魔法技能 [PMMO]"),
+            Map.entry("pmmo:endurance", "🛡️ 忍耐技能 [PMMO]"),
+            Map.entry("pmmo:crafting", "🔨 合成技能 [PMMO]"),
+            Map.entry("pmmo:cooking", "🍳 烹饪技能 [PMMO]"),
+            Map.entry("pmmo:farming", "🌾 种植技能 [PMMO]"),
+            Map.entry("pmmo:smithing", "⚒️ 巧匠技能 [PMMO]"),
+            Map.entry("pmmo:alchemy", "🧪 炼金技能 [PMMO]"),
+            Map.entry("pmmo:archery", "🏹 箭术技能 [PMMO]"),
+            Map.entry("pmmo:flying", "🪽 飞行技能 [PMMO]")
     );
+
+    private static final String[] PMMO_SKILL_IDS = {
+            "pmmo:fishing", "pmmo:combat", "pmmo:slayer", "pmmo:hunter", "pmmo:sailing",
+            "pmmo:mining", "pmmo:building", "pmmo:guns", "pmmo:grace", "pmmo:swimming",
+            "pmmo:agility", "pmmo:woodcutting", "pmmo:excavation", "pmmo:magic", "pmmo:endurance",
+            "pmmo:crafting", "pmmo:cooking", "pmmo:farming", "pmmo:smithing", "pmmo:alchemy",
+            "pmmo:archery", "pmmo:flying"
+    };
 
     public static class AttributeItem {
         public final String id;
@@ -83,10 +115,10 @@ public class DevHelperScreen extends Screen {
         int guiTop = 15;
 
         // 页签切换按钮：定位在标题右侧，避免重叠
-        this.addRenderableWidget(Button.builder(Component.literal("全模组属性"), btn -> {
+        this.addRenderableWidget(Button.builder(Component.literal("全模组属性与技能"), btn -> {
             this.activeTab = 0;
             rebuildWidgets();
-        }).bounds(guiLeft + 180, guiTop + 5, 95, 20).build());
+        }).bounds(guiLeft + 165, guiTop + 5, 110, 20).build());
 
         this.addRenderableWidget(Button.builder(Component.literal("玩家状态"), btn -> {
             this.activeTab = 1;
@@ -96,7 +128,7 @@ public class DevHelperScreen extends Screen {
         if (this.activeTab == 0) {
             // 搜索框
             this.searchBox = new EditBox(this.font, guiLeft + 10, guiTop + 32, 370, 18, Component.literal("Search"));
-            this.searchBox.setHint(Component.literal("🔍 搜索中文含义或注册ID (如 生命, 护甲, luck)..."));
+            this.searchBox.setHint(Component.literal("🔍 搜索 钓鱼, 战斗, 飞行, 生命, 护甲, luck..."));
             this.searchBox.setResponder(text -> filterList());
             this.addRenderableWidget(this.searchBox);
 
@@ -152,6 +184,13 @@ public class DevHelperScreen extends Screen {
         Player player = Minecraft.getInstance().player;
         if (player == null) return;
 
+        // 1. 加载所有 PMMO 技能数据到可视化界面
+        for (String pmmoId : PMMO_SKILL_IDS) {
+            String cnName = CHINESE_MAP.getOrDefault(pmmoId, pmmoId);
+            allAttributes.add(new AttributeItem(pmmoId, cnName, null, 0.0, 0.0));
+        }
+
+        // 2. 加载所有注册的 Forge / Minecraft / 模组属性
         for (ResourceLocation loc : ForgeRegistries.ATTRIBUTES.getKeys()) {
             Attribute attribute = ForgeRegistries.ATTRIBUTES.getValue(loc);
             if (attribute != null) {
@@ -170,7 +209,6 @@ public class DevHelperScreen extends Screen {
         if (CHINESE_MAP.containsKey(fullId)) {
             return CHINESE_MAP.get(fullId);
         }
-        // 尝试从语言文件中读取原生的中文名称
         try {
             Component nameComp = Component.translatable(attribute.getDescriptionId());
             String text = nameComp.getString();
@@ -179,7 +217,6 @@ public class DevHelperScreen extends Screen {
             }
         } catch (Exception ignored) {}
 
-        // Fallback 后备提取
         String path = fullId.contains(":") ? fullId.split(":")[1] : fullId;
         return path.replace("generic.", "").replace("player.", "").replace("_", " ");
     }
@@ -200,7 +237,7 @@ public class DevHelperScreen extends Screen {
         try {
             double val = Double.parseDouble(valueInputBox.getValue());
             DevHelperNetwork.CHANNEL.sendToServer(new C2SUpdateAttributePacket(selectedAttribute.id, val));
-            showStatus("已提交 " + selectedAttribute.chineseName + " -> " + val);
+            showStatus("已提交 " + selectedAttribute.chineseName + " -> " + (long)val + " 级！");
             refreshAttributeList();
         } catch (NumberFormatException e) {
             showStatus("请输入有效的数值！");
@@ -222,7 +259,7 @@ public class DevHelperScreen extends Screen {
 
     private void resetDefaultValue() {
         if (selectedAttribute == null) return;
-        double defaultVal = selectedAttribute.attribute.getDefaultValue();
+        double defaultVal = (selectedAttribute.attribute != null) ? selectedAttribute.attribute.getDefaultValue() : 1.0;
         if (valueInputBox != null) valueInputBox.setValue(String.format(Locale.ROOT, "%.2f", defaultVal));
         applyValue();
     }
@@ -283,7 +320,7 @@ public class DevHelperScreen extends Screen {
         graphics.fill(guiLeft, guiTop, guiLeft + 390, guiTop + 240, 0xF0181822);
         graphics.renderOutline(guiLeft, guiTop, 390, 240, 0xFF4A4A66);
 
-        // 标题 (独立定位在左上角，绝对不与右侧的页签按钮打架重叠)
+        // 标题
         graphics.drawString(this.font, Component.literal("🛠️ 开发者辅助"), guiLeft + 12, guiTop + 10, 0xFFFFFF);
 
         if (this.activeTab == 0) {
@@ -309,8 +346,13 @@ public class DevHelperScreen extends Screen {
                 if (titleText.length() > 36) titleText = titleText.substring(0, 34) + "..";
 
                 graphics.drawString(this.font, titleText, guiLeft + 15, itemY + 6, isSelected ? 0xFFFF55 : 0xE0E0E0);
-                String valStr = String.format(Locale.ROOT, "生效:%.1f | 基址:%.1f", item.currentValue, item.baseValue);
-                graphics.drawString(this.font, valStr, guiLeft + 235, itemY + 6, 0x55FF55);
+
+                if (!item.id.startsWith("pmmo:")) {
+                    String valStr = String.format(Locale.ROOT, "生效:%.1f | 基址:%.1f", item.currentValue, item.baseValue);
+                    graphics.drawString(this.font, valStr, guiLeft + 235, itemY + 6, 0x55FF55);
+                } else {
+                    graphics.drawString(this.font, "可一键升至指定级数", guiLeft + 250, itemY + 6, 0x55FFFF);
+                }
             }
 
             // 滚动条提示信息
