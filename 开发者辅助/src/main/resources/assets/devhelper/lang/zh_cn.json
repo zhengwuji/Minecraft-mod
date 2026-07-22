@@ -1,0 +1,17 @@
+{
+  "key.categories.devhelper": "开发者辅助",
+  "key.devhelper.open_gui": "打开 开发者辅助 界面",
+  "gui.devhelper.title": "🛠️ 开发者辅助 - 全模组自适应属性修改器",
+  "gui.devhelper.search": "搜索属性名称或注册ID...",
+  "gui.devhelper.set_value": "设置基础值",
+  "gui.devhelper.reset": "重置默认",
+  "gui.devhelper.current_value": "当前生效值: ",
+  "gui.devhelper.base_value": "基础基址值: ",
+  "gui.devhelper.tab_attributes": "玩家与全模组属性",
+  "gui.devhelper.tab_player": "玩家基础状态",
+  "gui.devhelper.health": "生命值",
+  "gui.devhelper.food": "饱食度",
+  "gui.devhelper.xp": "经验等级",
+  "gui.devhelper.heal": "一键回复满血满饱食",
+  "gui.devhelper.success": "数据更改已成功向服务端与本地同步！"
+}

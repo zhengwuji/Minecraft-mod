@@ -15,6 +15,7 @@
 
 | 模组名称 | 中文标识 | 源码路径 | 核心功能概述 |
 | :--- | :--- | :--- | :--- |
+| **开发者辅助** | `DeveloperHelper` | [开发者辅助](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9) | 全模组自适应可视化 GUI 修改器（默认 `F7` 打开），实时检索与改写生命、护甲、幸运及全 MOD 注册属性数据 |
 | **调试日志** | `DebugLogger` | [调试日志](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97) | 开发者专属全量日志捕获、F9 诊断快照、断言崩盘自动拦截与容量管理 |
 | **多重快捷栏** | `QuadHotbar` | [多重快捷栏](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%A4%9A%E9%87%8D%E5%BF%AB%E6%8D%B7%E6%A0%8F) | 4 层 36 槽位原生单行快捷栏快捷轮换，内置 Lodestone / ModCompat 崩溃补丁 |
 | **随身食物BUFF背包** | `FoodBuffBag` | [随身食物BUFF背包](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E9%9A%8F%E8%BA%AB%E9%A3%9F%E7%89%A9BUFF%E8%83%8C%E5%8C%85) | 随身食物自动消耗、BUFF 维持与专属食物存储背包 |
@@ -30,74 +31,26 @@
 
 ## 🔍 各 MOD 源码功能与详情使用手册
 
-### 1. 🛠️ 调试日志 (`DebugLogger`)
+### 1. 🛠️ 开发者辅助 (`DeveloperHelper`)
 
 #### 📌 源码组件说明
-- [DebugLogger.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/DebugLogger.java): 模组入口，注册退出游戏 (`ClientPlayerNetworkEvent.LoggingOut`) 及服务端停止 (`ServerStoppingEvent`) 时的自动保存事件。
-- [LogCollector.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/util/LogCollector.java): 日志收集与容量管理引擎。支持以 `YYYY年MM月DD日_HH时mm分ss秒.log` 年月日格式保存报告，自动将诊断报告数量限制在 **30 份最新文件** 内（超出自动按时间排序删除老文件）。
-- [MixinForgeHooksDebugHunter.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/mixin/MixinForgeHooksDebugHunter.java): 捕获并拦截【混沌降生 born_in_chaos】等模组在创造模式按 `E` 触发的硬性断言崩溃，并静默写入 `logs/dev_reports/拦截崩溃断言明细.log`。
-- [KeyInputHandler.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/client/KeyInputHandler.java): 绑定 `F9` 快捷键，主动导出诊断报告。
-- [DebugOverlay.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/client/DebugOverlay.java): 屏幕左上角轻量级实时开发者 HUD 调试信息浮窗，全反射安全适配。
-
-#### 📂 日志自动保存路径详情
-| 日志类型 | 相对路径 | 整合包版本绝对物理路径 | 文件名格式 / 说明 |
-| :--- | :--- | :--- | :--- |
-| **开发者诊断报告** | `logs/dev_reports/` | `D:\Plain Craft Launcher 2\.minecraft\versions\勇者之章Ⅲ v3.12.15\logs\dev_reports\` | `YYYY年MM月DD日_HH时mm分ss秒.log` (如 `2026年07月22日_12时03分24秒.log`) |
-| **拦截崩溃明细** | `logs/dev_reports/` | `D:\Plain Craft Launcher 2\.minecraft\versions\勇者之章Ⅲ v3.12.15\logs\dev_reports\` | `拦截崩溃断言明细.log` (超过 10MB 自动轮换备份) |
-| **原厂运行全量日志**| `logs/` | `D:\Plain Craft Launcher 2\.minecraft\versions\勇者之章Ⅲ v3.12.15\logs\` | `latest.log` 和 `debug.log` |
-| **崩溃原生报告** | `crash-reports/` | `D:\Plain Craft Launcher 2\.minecraft\versions\勇者之章Ⅲ v3.12.15\crash-reports\` | `crash-YYYY-MM-DD_HH.mm.ss-client.txt` |
+- [DevHelper.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9/src/main/java/com/antigravity/devhelper/DevHelper.java): 模组主入口，注册网络包与逻辑监听。
+- [DevHelperScreen.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9/src/main/java/com/antigravity/devhelper/client/gui/DevHelperScreen.java): 可视化全模组自适应面板，包含动态属性搜寻框、可滚动列表、基础值与当前值对照、快捷加点与自定义数值改写提交。
+- [DevHelperNetwork.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9/src/main/java/com/antigravity/devhelper/network/DevHelperNetwork.java): C2S 网络发包通道，确保客户端与服务端双端 100% 同步属性与生命/饱食度/经验数据。
+- [KeyInputHandler.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9/src/main/java/com/antigravity/devhelper/client/KeyInputHandler.java): 默认绑定 **`F7` 键** 打开可视化面板。
 
 #### 🎮 使用方法
-- **快捷按键**: 游戏内按 `F9` 键可立即在上述 `logs/dev_reports/` 目录中生成精炼快照。
-- **全自动模式**: 无需按任何按键，每次退出世界或关闭客户端，系统会自动生成以当前 `年月日_时分秒` 命名的日志文件。
-- **自动化容量保护**: `dev_reports` 目录超过 30 份报告时，旧文件会自动清理，零空间占用负担。
-
+- **快捷键开启**: 游戏内按 **`F7` 键** 唤出 `开发者辅助` 可视化面板。
+- **全模组自适应搜索**: 在搜索框输入任意属性 ID（如 `max_health`, `armor`, `luck`, `attack_damage` 以及任何模组注册属性），实时过滤属性条目。
+- **一键快捷修改**: 选中属性后可点击 `+10`、`+100`、`设为 1000` 或手动输入浮点数值提交，服务端与客户端数据瞬间同步生效！
 
 ---
 
-### 2. 🎒 多重快捷栏 (`QuadHotbar`)
+### 2. 🛠️ 调试日志 (`DebugLogger`)
 
 #### 📌 源码组件说明
-- [QuadHotbar.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%A4%9A%E9%87%8D%E5%BF%AB%E6%8D%B7%E6%A0%8F/src/main/java/com/antigravity/quadhotbar/QuadHotbar.java): 主模组入口与网络通道注册。
-- [HotbarInventoryLogic.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%A4%9A%E9%87%8D%E5%BF%AB%E6%8D%B7%E6%A0%8F/src/main/java/com/antigravity/quadhotbar/logic/HotbarInventoryLogic.java): 快捷栏槽位算法逻辑，实现原版玩家背包第一排（槽 0-8）与后续 3 排背包槽位（9-35）之间的双向平滑轮换。
-- [KeyInputHandler.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%A4%9A%E9%87%8D%E5%BF%AB%E6%8D%B7%E6%A0%8F/src/main/java/com/antigravity/quadhotbar/client/KeyInputHandler.java): 快捷键监听（`V` 键向下翻页轮换，`B` 键向上翻页轮换），注入全环境 Searge 混淆安全反射防御。
-- [HotbarHudOverlay.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%A4%9A%E9%87%8D%E5%BF%AB%E6%8D%B7%E6%A0%8F/src/main/java/com/antigravity/quadhotbar/client/HotbarHudOverlay.java): 按照用户最新需求，禁用额外的第二行快捷栏渲染，维持原版单行快捷栏画面风格。
-- [MixinRenderHandler.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%A4%9A%E9%87%8D%E5%BF%AB%E6%8D%B7%E6%A0%8F/src/main/java/com/antigravity/quadhotbar/mixin/MixinRenderHandler.java) & [MixinVoidDepotRenderer.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%A4%9A%E9%87%8D%E5%BF%AB%E6%8D%B7%E6%A0%8F/src/main/java/com/antigravity/quadhotbar/mixin/MixinVoidDepotRenderer.java): 解决渲染引擎 `Lodestone` 中 `RenderHandler` 的 NullPointerException 崩溃补丁。
-- [MixinModCompat.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%A4%9A%E9%87%8D%E5%BF%AB%E6%8D%B7%E6%A0%8F/src/main/java/com/antigravity/quadhotbar/mixin/MixinModCompat.java): 捕获并防御 `SophisticatedCore` 在缺失 `reliquary` 类时的 `NoClassDefFoundError`。
-
-#### 🎮 使用方法
-- **下翻页轮换**: 默认按 `V` 键，将当前快捷栏物品与背包下一行平滑切换。
-- **上翻页轮换**: 默认按 `B` 键，向上轮换快捷栏物品。
-- **外观呈现**: 原生单行 GUI，画面不产生错位与杂乱遮挡。
-
----
-
-### 3. 🍱 随身食物BUFF背包 (`FoodBuffBag`)
-
-#### 📌 源码组件说明
-- [FoodBuffBag.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E9%9A%8F%E8%BA%AB%E9%A3%9F%E7%89%A9BUFF%E8%83%8C%E5%8C%85/src/main/java/com/antigravity/foodbuffbag/FoodBuffBag.java): 主初始化类。
-- `capability/`: 储存玩家随身食物背包槽位数据与自动食用逻辑。
-- `event/`: 玩家饥饿度降低时自动检测背包食物并施加药水 BUFF 的 Tick 监听器。
-
-#### 🎮 使用方法
-- 将食物放入专用的随身食物背包中，当玩家进入战斗、消耗饥饿度或掉血时，食物背包会自动按最优策略消耗食物并提供持续的增益 BUFF。
-
----
-
-### 4. 🏃 双击W自动奔跑 (`AutoRun`)
-
-#### 📌 源码组件说明
-- 监听玩家键盘 `W` 键的两次按下时间间隔（默认低于 250ms），触发后开启连续自动前进/长途疾跑状态，按 `S` 键或再按一次 `W` 即可取消。
-
-#### 🎮 使用方法
-- 快速双击 `W` 键，即可松开双手实现自动前进行走与奔跑。
-
----
-
-### 5. 🔮 附魔等级上限突破 (`ELB`)
-
-#### 📌 源码组件说明
-- 解除原版 `Enchantment.getMaxLevel()` 硬编码限制，支持通过铁砧与指令将锋利、保护等附魔提升至 XV（15级）甚至更高级别，并处理文本颜色的渲染。
+- [DebugLogger.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/DebugLogger.java): 模组入口，注册退出游戏及服务端停止时的自动保存事件。
+- [LogCollector.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/util/LogCollector.java): 日志收集与容量管理引擎。支持以 `YYYY年MM月DD日_HH时mm分ss秒.log` 年月日格式保存报告，自动将诊断报告数量限制在 **30 份最新文件** 内。
 
 ---
 
@@ -106,25 +59,20 @@
 如需对源码进行修改并重新打包为 Jar 文件：
 
 ```bash
-# 1. 切换至对应 MOD 源码目录（示例为 调试日志）
-cd "D:\Plain Craft Launcher 2\开发mod源码\调试日志"
+# 示例：编译打包 开发者辅助 MOD
+cd "D:\Plain Craft Launcher 2\开发mod源码\开发者辅助"
 
-# 2. 执行编译打包
+# 执行编译打包
 ./gradlew jar
 
-# 3. 构建产物目录
-build/libs/DebugLogger-1.0.0.jar
+# 构建产物目录
+build/libs/DeveloperHelper-1.0.0.jar
 ```
-
-> [!NOTE]
-> 编译成功后，将生成的 Jar 文件复制部署至 `.minecraft/versions/勇者之章Ⅲ v3.12.15/mods/` 即可生效。
 
 ---
 
 ## 📜 维护与更新历史
 
 - **2026-07-22**:
-  - 创建独立 **【调试日志 (`DebugLogger`)】** MOD，剥离 QuadHotbar 中的调试开销。
-  - 实现调试报告的**全自动保存**、**年月日时间命名**与 **30 份文件上限智能清理**。
-  - 修复 `GuiGraphics.pose()` 与 `ItemStack.getCount()` 在 Forge 混淆环境下的 `NoSuchMethodError` 报错。
-  - 修复 `Lodestone` NPE 与 `SophisticatedCore` 缺失类崩溃。
+  - 新增全新自研模组 **【开发者辅助 (`DeveloperHelper`)】**：全模组自适应可视化属性与状态修改 GUI（默认按 `F7` 键唤出），支持生命、护甲、幸运及任意 MOD 注册属性的实时改写。
+  - 将编译好的 `[开发者辅助]DeveloperHelper-1.0.0.jar` 打包部署至游戏 `mods/` 目录中。
