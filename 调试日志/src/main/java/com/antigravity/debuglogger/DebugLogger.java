@@ -3,6 +3,7 @@ package com.antigravity.debuglogger;
 import com.antigravity.debuglogger.util.LogCollector;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -10,6 +11,7 @@ import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -25,6 +27,17 @@ public class DebugLogger {
     public static final Logger LOGGER = LogManager.getLogger("DevDebugLogger");
 
     public DebugLogger() {
+        // 🚀 在极早期构造阶段强制预热初始化 Lodestone 的 RenderHandler，彻底打断 Malum 渲染层空指针死锁！
+        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+            try {
+                Class<?> rhClass = Class.forName("team.lodestar.lodestone.handlers.RenderHandler");
+                rhClass.getMethod("onClientSetup", net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent.class).invoke(null, (Object) null);
+                LOGGER.info("[调试日志-HUNTER] 🛡️ 成功在 MOD 构造初期提前预热初始化 Lodestone RenderHandler！");
+            } catch (Throwable t) {
+                LOGGER.warn("[调试日志-HUNTER] 预热初始化 Lodestone RenderHandler 触发非致命警告:", t);
+            }
+        });
+
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         modEventBus.addListener(this::onCommonSetup);
@@ -33,7 +46,7 @@ public class DebugLogger {
 
         MinecraftForge.EVENT_BUS.register(this);
 
-        LOGGER.info("[调试日志] Dev Debug Logger 模组（纯后台全自动引擎）初始化成功！");
+        LOGGER.info("[调试日志] Dev Debug Logger 模组（纯后台全自动防护引擎）初始化成功！");
     }
 
     private void onBuildCreativeTab(BuildCreativeModeTabContentsEvent event) {
@@ -55,7 +68,7 @@ public class DebugLogger {
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
-        LOGGER.info("[调试日志] 客户端全自动保存模式已开启（已清除按键绑定与前台快捷键）。");
+        LOGGER.info("[调试日志] 客户端全自动保存模式已开启（纯后台全自动运行）。");
     }
 
     @SubscribeEvent
