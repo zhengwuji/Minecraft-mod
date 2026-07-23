@@ -1,0 +1,32 @@
+modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+
+[[mods]]
+modId="custom_emc"
+version="1.0.0"
+displayName="自定义等价交换EMC"
+description='''
+可以自定义指定物品EMC价格，默认自动设置全局所有无EMC物品价格为5555，已有EMC不改变。
+'''
+
+[[dependencies.custom_emc]]
+    modId="forge"
+    mandatory=true
+    versionRange="[47.1.0,)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.custom_emc]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="[1.20.1,1.21)"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.custom_emc]]
+    modId="projecte"
+    mandatory=true
+    versionRange="[1.0.0,)"
+    ordering="NONE"
+    side="BOTH"

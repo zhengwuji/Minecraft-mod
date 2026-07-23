@@ -15,6 +15,7 @@
 
 | 模组名称 | 中文标识 | 源码路径 | 核心功能概述 |
 | :--- | :--- | :--- | :--- |
+| **自定义等价交换EMC** | `CustomEMC` | [自定义等价交换EMC](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC) | 默认 `F8` 呼出现代化 GUI 面板（按键设置汉化分类为`自定义等价交换EMC`，支持自定义按键与组合键）；自适应全 MOD 物品兜底价格（默认 5555），支持抓取主手物品 ID 与一键重载 ProjectE EMC |
 | **定位物品-怪** | `ItemEntityTracker` | [定位物品-怪](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA) | 默认 `F6` 可视化透视面板，支持搜索怪物、实体、方块、矿石与掉落物，视野中高亮框透视、连线与直线距离显示 |
 | **开发者辅助** | `DeveloperHelper` | [开发者辅助](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9) | 全模组自适应可视化 GUI 修改器（默认 `F7` 打开），实时检索与改写生命、护甲、幸运及全 MOD 注册属性数据 |
 | **调试日志** | `DebugLogger` | [调试日志](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97) | 开发者专属全量日志捕获、F9 诊断快照、断言崩盘自动拦截与容量管理 |
@@ -32,7 +33,27 @@
 
 ## 🔍 各 MOD 源码功能与详情使用手册
 
-### 0. 🎯 定位物品-怪 (`ItemEntityTracker`)
+### 0. ⚡ 自定义等价交换EMC (`CustomEMC`)
+
+#### 📌 源码组件说明
+- [CustomEMCMod.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/CustomEMCMod.java): 模组主入口，负责初始化与事件总线监听。
+- [CustomEMCMapper.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/CustomEMCMapper.java): 继承 `IEMCMapper`，实现对 ProjectE EMC 拓扑树的动态注入。支持全局无价格物品的默认 5555 EMC 自动补充（`setValueAfter`）以及自定义指定物品 EMC 的强行覆写（`setValueBefore`）。
+- [ConfigManager.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/ConfigManager.java): 配置文件数据持久化（读写 `.minecraft/config/custom_emc.json`），自动格式化生成默认规则。
+- [CustomEMCScreen.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/client/gui/CustomEMCScreen.java): 现代化深色玻璃质感控制面板 GUI。支持实时修改默认 EMC、一键抓取主手物品 ID、指定物品价格修改与自动发送指令重载 ProjectE EMC。
+- [KeyInit.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/client/KeyInit.java): 注册 `F8` 打开 GUI 的按键绑定，分类汉化为 **`自定义等价交换EMC`**，原生支持在原版控制菜单中重绑定单键或组合键。
+
+#### 🎮 使用方法
+- **快捷键开启 GUI**: 游戏内按 **`F8` 键** 唤出 `自定义等价交换EMC` 可视化控制面板。
+- **快捷键重绑定**: 打开游戏 `选项 -> 控制 -> 按键绑定`，在 **【自定义等价交换EMC】** 分类下可自由修改为任意单键或组合键（如 `Shift + F8`、`Ctrl + K`）。
+- **界面一键操作**:
+  - 输入全局默认 EMC 价格（如 `5555`）；
+  - 手持任意 MOD 物品点击 `抓取主手物品` 自动填入物品 ID；
+  - 输入指定价格点击 `添加/更新此指定价格`；
+  - 点击 `保存配置并同步重载 EMC` 自动写盘并执行 `/projecte reloadEMC`，瞬间全服刷新价格！
+
+---
+
+### 1. 🎯 定位物品-怪 (`ItemEntityTracker`)
 
 #### 📌 源码组件说明
 - [ItemEntityTracker.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA/src/main/java/com/antigravity/tracker/ItemEntityTracker.java): 模组主入口类，初始化客户端与事件注册。
@@ -47,7 +68,7 @@
 
 ---
 
-### 1. 🛠️ 开发者辅助 (`DeveloperHelper`)
+### 2. 🛠️ 开发者辅助 (`DeveloperHelper`)
 
 #### 📌 源码组件说明
 - [DevHelper.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9/src/main/java/com/antigravity/devhelper/DevHelper.java): 模组主入口，注册网络包与逻辑监听。
@@ -62,7 +83,7 @@
 
 ---
 
-### 2. 🛠️ 调试日志 (`DebugLogger`)
+### 3. 🛠️ 调试日志 (`DebugLogger`)
 
 #### 📌 源码组件说明
 - [DebugLogger.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/DebugLogger.java): 模组入口，注册退出游戏及服务端停止时的自动保存事件。
@@ -80,30 +101,35 @@
 
 ---
 
-
 ## 🔨 编译与构建说明
 
 如需对源码进行修改并重新打包为 Jar 文件：
 
 ```bash
-# 示例：编译打包 定位物品-怪 MOD
-cd "D:\Plain Craft Launcher 2\开发mod源码\定位物品-怪"
+# 示例：编译打包 自定义等价交换EMC MOD
+cd "D:\Plain Craft Launcher 2\开发mod源码\自定义等价交换EMC"
 
 # 执行编译打包
-./gradlew jar
+python C:\Users\Administrator\.gemini\antigravity-ide\brain\7e0e13c1-8b8f-420b-bc46-28d3b722476a\scratch\build_mod.py
 
 # 构建产物目录
-build/libs/ItemEntityTracker-1.0.0.jar
+build/libs/[自定义等价交换EMC]CustomEMC-1.0.0.jar
 ```
 
 ---
 
 ## 📜 维护与更新历史
 
+- **2026-07-24**:
+  - 新增全新自研模组 **【自定义等价交换EMC (`CustomEMC`)】**：
+    - 全面适配 ProjectE API 拓扑映射，支持全 MOD 无 EMC 物品自适应兜底价格赋予（默认 5555）。
+    - 研发现代化深色玻璃质感 **F8 GUI 控制面板**，支持实时修改默认 EMC、一键抓取主手物品 ID、指定物品覆盖与自动执行重载。
+    - 将快捷键控制分类汉化为 **`自定义等价交换EMC`**，原生支持游戏控制选项卡修改单键与组合键。
+    - 修复 Forge `ResourcePackInfo` 加载警告（添加 `pack.mcmeta`）与 GUI 遮罩 `MixinScreen` 递归渲染导致的 `StackOverflowError`。
+    - 编译打包 `[自定义等价交换EMC]CustomEMC-1.0.0.jar` 并部署至游戏 `mods/` 目录。
 - **2026-07-23**:
   - 新增全新自研模组 **【定位物品-怪 (`ItemEntityTracker`)】**：按 `F6` 键唤出可视化配置面板，支持对全模组怪物、实体、方块与掉落物进行搜索、高亮透视彩框、连接射线与 `XX.Xm` 距离标引。
   - 将编译好的 `[定位物品-怪]ItemEntityTracker-1.0.0.jar` 打包部署至游戏 `mods/` 目录中。
 - **2026-07-22**:
-  - 升级 **【随身食物BUFF背包 (`FoodBuffBag`)】**：正式突破仅限食物的限制，全面支持将**任意附魔装备/武器/防具/饰品/药水物品**直接放入仓库。放置在仓库内的同类附魔与同类 BUFF 实现了**全量无上限等级累加叠加机制**（例如：放入多件带【锋利 VI】或【力量 I】的装备/食物，对应【力量】BUFF 等级会自动相加升至 13 级以上！），向玩家持续施加强大的无上限永久增益 BUFF！
-  - 新增全新自研模组 **【开发者辅助 (`DeveloperHelper`)】**：全模组自适应可视化属性与状态修改 GUI（默认按 `F7` 键唤出），支持生命、护甲、幸运及任意 MOD 注册属性的实时改写。
-  - 将编译好的 `[开发者辅助]DeveloperHelper-1.0.0.jar` 与 `[随身食物BUFF背包]FoodBuffBag-1.0.0.jar` 打包部署至游戏 `mods/` 目录中。
+  - 升级 **【随身食物BUFF背包 (`FoodBuffBag`)】**：正式突破仅限食物的限制，全面支持将**任意附魔装备/武器/防具/饰品/药水物品**直接放入仓库。放置在仓库内的同类附魔与同类 BUFF 实现了**全量无上限等级累加叠加机制**。
+  - 新增全新自研模组 **【开发者辅助 (`DeveloperHelper`)】**：全模组自适应可视化属性与状态修改 GUI（默认按 `F7` 键唤出）。
