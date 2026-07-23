@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Locale;
@@ -22,6 +23,17 @@ public class MixinProjectEDebugLogger {
 
     @Shadow
     public String filter;
+
+    @Shadow
+    public int searchpage;
+
+    @Inject(method = "updateClientTargets", at = @At("HEAD"))
+    private void debuglogger$resetSearchPageOnUpdate(CallbackInfo ci) {
+        // 🚀 核心大绝杀：当搜索框进行过滤更新时，强制归零页码（searchpage = 0），彻底解决翻页超界导致的搜索界面空白问题！
+        if (this.filter != null && !this.filter.trim().isEmpty()) {
+            this.searchpage = 0;
+        }
+    }
 
     @Inject(method = "doesItemMatchFilter", at = @At("HEAD"), cancellable = true)
     private void debuglogger$logAndMatchFilter(ItemInfo info, CallbackInfoReturnable<Boolean> cir) {
@@ -42,31 +54,27 @@ public class MixinProjectEDebugLogger {
         } catch (Throwable ignored) {
         }
 
-        String nbtText = nbt != null ? nbt.toString() : "null";
+        String nbtText = nbt != null ? nbt.toString() : "";
 
-        // 详细输出到调试日志
-        LOGGER.info("[转换桌调试日志-HUNTER] 过滤匹配中 -> 输入: '{}' | 物品ID: {} | 悬停名: '{}' | NBT: {}",
-                search, itemIdStr, hoverName, nbtText);
-
-        // 深层比对
+        // 多维深度与模糊容错比对
         boolean matched = false;
 
-        // 1. 悬停名比对
+        // 1. 悬停展示名比对
         if (hoverName.toLowerCase(Locale.ROOT).contains(search)) {
             matched = true;
         }
 
-        // 2. ID比对
+        // 2. 物品注册 ID 比对
         if (!matched && (itemIdStr.toLowerCase(Locale.ROOT).contains(search) || (loc != null && loc.getPath().toLowerCase(Locale.ROOT).contains(search)))) {
             matched = true;
         }
 
-        // 3. NBT文本比对 (如 GunId)
+        // 3. NBT 全文本深层比对（如 GunId）
         if (!matched && nbt != null && nbtText.toLowerCase(Locale.ROOT).contains(search)) {
             matched = true;
         }
 
-        // 4. 清洗比对
+        // 4. 清洗下划线与连字符容错比对
         if (!matched) {
             String cleanSearch = search.replace("_", "").replace("-", "").replace(" ", "");
             if (!cleanSearch.isEmpty()) {
@@ -78,7 +86,7 @@ public class MixinProjectEDebugLogger {
             }
         }
 
-        LOGGER.info("[转换桌调试日志-HUNTER] -> 匹配结果: {}", matched);
+        LOGGER.info("[转换桌调试日志-HUNTER] 搜索: '{}' | 物品: {} | 悬停: '{}' | 结果: {}", search, itemIdStr, hoverName, matched);
         cir.setReturnValue(matched);
     }
 }
