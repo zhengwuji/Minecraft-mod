@@ -50,9 +50,9 @@ public class ConfigManager {
                     }
                 }
             }
-            LOGGER.info("[自定义等价交换EMC] 配置文件加载成功！默认EMC: {}, 自定义指定物品数: {}", defaultEMC, customEMCMap.size());
+            LOGGER.info("[自定义等价交换EMC] 配置加载成功！默认EMC: {}, 自定义指定项: {}", defaultEMC, customEMCMap.size());
         } catch (Exception e) {
-            LOGGER.error("[自定义等价交换EMC] 加载配置文件失败！", e);
+            LOGGER.error("[自定义等价交换EMC] 配置加载失败：", e);
         }
     }
 
@@ -81,10 +81,19 @@ public class ConfigManager {
             try (FileWriter writer = new FileWriter(CONFIG_FILE, StandardCharsets.UTF_8)) {
                 GSON.toJson(json, writer);
             }
-            LOGGER.info("[自定义等价交换EMC] 配置文件修改保存成功！路径: {}", CONFIG_FILE.getAbsolutePath());
+            LOGGER.info("[自定义等价交换EMC] 配置文件保存成功！路径: {}", CONFIG_FILE.getAbsolutePath());
         } catch (Exception e) {
-            LOGGER.error("[自定义等价交换EMC] 保存配置文件失败！", e);
+            LOGGER.error("[自定义等价交换EMC] 配置文件保存失败：", e);
         }
+    }
+
+    public static void setDefaultEMC(long val) {
+        saveConfig(val, customEMCMap);
+    }
+
+    public static void setCustomPrice(String itemId, long price) {
+        customEMCMap.put(itemId, price);
+        saveConfig(defaultEMC, customEMCMap);
     }
 
     private static void createDefaultConfig() {

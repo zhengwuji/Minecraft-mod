@@ -22,9 +22,9 @@ public class ClientModEvents {
 
         @SubscribeEvent
         public static void onKeyInput(InputEvent.Key event) {
-            if (KeyInit.OPEN_GUI_KEY.m_90857_()) {
-                if (Minecraft.m_91087_().f_91080_ == null) {
-                    Minecraft.m_91087_().m_91152_(new CustomEMCScreen());
+            if (KeyInit.OPEN_GUI_KEY.consumeClick()) {
+                if (Minecraft.getInstance().screen == null) {
+                    Minecraft.getInstance().setScreen(new CustomEMCScreen());
                 }
             }
         }

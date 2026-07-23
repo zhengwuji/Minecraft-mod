@@ -1,4 +1,4 @@
-package com.antigravity.debuglogger.mixin;
+package com.customemc.mixin;
 
 import moze_intel.projecte.api.ItemInfo;
 import moze_intel.projecte.gameObjs.container.inventory.TransmutationInventory;
@@ -21,7 +21,7 @@ public class MixinTransmutationInventory {
     public String filter;
 
     @Inject(method = "doesItemMatchFilter", at = @At("HEAD"), cancellable = true)
-    private void debuglogger$enhancedSearchFilter(ItemInfo info, CallbackInfoReturnable<Boolean> cir) {
+    private void customemc$enhancedSearchFilter(ItemInfo info, CallbackInfoReturnable<Boolean> cir) {
         if (this.filter == null || this.filter.trim().isEmpty()) {
             cir.setReturnValue(true);
             return;
