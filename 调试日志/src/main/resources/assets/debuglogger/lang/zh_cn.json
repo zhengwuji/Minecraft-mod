@@ -1,5 +1,3 @@
 {
-  "key.categories.debuglogger": "调试日志 (Dev)",
-  "key.debuglogger.export_log": "一键导出开发者调试日志 (F9)",
-  "key.debuglogger.toggle_hud": "切换调试日志HUD浮窗"
+  "mod.debuglogger.name": "调试日志"
 }

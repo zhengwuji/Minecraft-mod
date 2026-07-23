@@ -1,10 +1,8 @@
 package com.antigravity.debuglogger;
 
-import com.antigravity.debuglogger.client.KeyInputHandler;
 import com.antigravity.debuglogger.util.LogCollector;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
@@ -12,7 +10,6 @@ import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -36,7 +33,7 @@ public class DebugLogger {
 
         MinecraftForge.EVENT_BUS.register(this);
 
-        LOGGER.info("[调试日志] Dev Debug Logger 模组与全全自动拦截引擎初始化成功！");
+        LOGGER.info("[调试日志] Dev Debug Logger 模组（纯后台全自动引擎）初始化成功！");
     }
 
     private void onBuildCreativeTab(BuildCreativeModeTabContentsEvent event) {
@@ -58,13 +55,7 @@ public class DebugLogger {
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
-            modEventBusAddListener();
-        });
-    }
-
-    private void modEventBusAddListener() {
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(KeyInputHandler::registerKeyMappings);
+        LOGGER.info("[调试日志] 客户端全自动保存模式已开启（已清除按键绑定与前台快捷键）。");
     }
 
     @SubscribeEvent
