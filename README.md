@@ -67,8 +67,20 @@
 #### 📌 源码组件说明
 - [DebugLogger.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/DebugLogger.java): 模组入口，注册退出游戏及服务端停止时的自动保存事件。
 - [LogCollector.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/util/LogCollector.java): 日志收集与容量管理引擎。支持以 `YYYY年MM月DD日_HH时mm分ss秒.log` 年月日格式保存报告，自动将诊断报告数量限制在 **30 份最新文件** 内。
+- [MixinTrashSlotFix.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/mixin/MixinTrashSlotFix.java): 动态重定向 Balm API 缺失的方法调用，修复垃圾桶模组 (`TrashSlot`) 加载及运行崩溃问题。
+
+#### 📂 日志保存路径说明
+调试日志模组会自动收集诊断日志并保存至游戏客户端目录下的 **`logs/dev_reports/`** 文件夹中：
+- **绝对路径**：`D:\Plain Craft Launcher 2\.minecraft\versions\勇者之章Ⅲ v3.12.15\logs\dev_reports\`
+- **运行诊断报告**：`logs/dev_reports/YYYY年MM月DD日_HH时mm分ss秒.log`（包含 JVM 内存、系统硬件、近期 ERROR/Exception 报错摘要，最多保留 30 份）。
+- **崩溃拦截明细**：`logs/dev_reports/拦截崩溃断言明细.log`（自动记录被模组安全捕获拦截的堆栈与违规检查，文件满 10MB 自动轮换备份）。
+
+#### 🎮 使用方法
+- **快捷键手动导出**: 游戏内按 **`F9` 键** 可随时生成并保存最新的诊断报告至 `logs/dev_reports/` 目录。
+- **自动触发备份**: 玩家退出游戏或服务端关闭时，模组会自动导出最新的运行日志报告。
 
 ---
+
 
 ## 🔨 编译与构建说明
 
