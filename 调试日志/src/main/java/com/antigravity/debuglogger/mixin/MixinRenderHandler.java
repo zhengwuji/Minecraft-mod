@@ -1,4 +1,4 @@
-package com.antigravity.quadhotbar.mixin;
+package com.antigravity.debuglogger.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -10,7 +10,7 @@ import team.lodestar.lodestone.handlers.RenderHandler;
 public class MixinRenderHandler {
 
     @Inject(method = "<clinit>", at = @At("RETURN"))
-    private static void quadhotbar$ensureRenderLayersInitialized(CallbackInfo ci) {
+    private static void debuglogger$ensureRenderLayersInitialized(CallbackInfo ci) {
         if (RenderHandler.DELAYED_RENDER == null || RenderHandler.LATE_DELAYED_RENDER == null) {
             try {
                 RenderHandler.onClientSetup(null);

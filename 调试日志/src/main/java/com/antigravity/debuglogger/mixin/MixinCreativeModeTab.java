@@ -1,4 +1,4 @@
-package com.antigravity.quadhotbar.mixin;
+package com.antigravity.debuglogger.mixin;
 
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
@@ -10,12 +10,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = CreativeModeTab.class, priority = 900)
 public abstract class MixinCreativeModeTab {
-    private static final Logger LOGGER = LogManager.getLogger("QuadHotbarDebug");
+    private static final Logger LOGGER = LogManager.getLogger("DebugLogger");
 
-    /**
-     * 拦截 CreativeModeTab.buildContents() 内部每次对 Output.accept 的调用
-     * 输出完整调试日志，并捕获任何 count != 1 的非法 Stack！
-     */
     @Redirect(
             method = "buildContents(Lnet/minecraft/world/item/CreativeModeTab$ItemDisplayParameters;)V",
             at = @At(
@@ -26,27 +22,24 @@ public abstract class MixinCreativeModeTab {
     )
     private void fixStackCountBeforeAccept(CreativeModeTab.Output output,
                                            ItemStack stack,
-                                           CreativeModeTab.TabVisibility visibility) {
+                                           Object visibility) {
         if (stack != null && !stack.isEmpty()) {
             int count = stack.getCount();
-            String itemStr = stack.getItem().toString();
-            String modId = stack.getItem().getCreatorModId(stack);
-
             if (count != 1) {
+                String itemStr = stack.getItem().toString();
+                String modId = stack.getItem().getCreatorModId(stack);
+
                 LOGGER.error("================================================================================");
-                LOGGER.error("[QuadHotbar-DEBUG-CRASH-HUNTER] 🚨 发现导致崩溃的非法物品！");
-                LOGGER.error("[QuadHotbar-DEBUG-CRASH-HUNTER] 物品名称: {}", itemStr);
-                LOGGER.error("[QuadHotbar-DEBUG-CRASH-HUNTER] 模组 ID:  {}", modId);
-                LOGGER.error("[QuadHotbar-DEBUG-CRASH-HUNTER] 物品数量 Count: {} (必须为 1 !)", count);
-                LOGGER.error("[QuadHotbar-DEBUG-CRASH-HUNTER] 正在强制将其 Count 修改为 1 以防止创造模式按 E 崩溃...");
+                LOGGER.error("[DebugLogger-HUNTER] 🚨 在创造页签与 JEI 构建中捕获到非法堆叠物品！");
+                LOGGER.error("[DebugLogger-HUNTER] 物品名称: {}", itemStr);
+                LOGGER.error("[DebugLogger-HUNTER] 模组 ID:  {}", modId);
+                LOGGER.error("[DebugLogger-HUNTER] 物品数量 Count: {} (应该为 1)", count);
+                LOGGER.error("[DebugLogger-HUNTER] 正在强制将其 Count 修正为 1 以防止创造模式/JEI崩溃卡死...");
                 LOGGER.error("================================================================================");
 
-                // 修正为 1
                 stack.setCount(1);
-            } else {
-                LOGGER.debug("[QuadHotbar-DEBUG] 正常注册物品: {} (Mod: {})", itemStr, modId);
             }
         }
-        output.accept(stack, visibility);
+        output.accept(stack, (CreativeModeTab.TabVisibility) visibility);
     }
 }
