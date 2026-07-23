@@ -67,7 +67,6 @@
 #### 📌 源码组件说明
 - [DebugLogger.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/DebugLogger.java): 模组入口，注册退出游戏及服务端停止时的自动保存事件。
 - [LogCollector.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/util/LogCollector.java): 日志收集与容量管理引擎。支持以 `YYYY年MM月DD日_HH时mm分ss秒.log` 年月日格式保存报告，自动将诊断报告数量限制在 **30 份最新文件** 内。
-- [MixinTrashSlotFix.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/mixin/MixinTrashSlotFix.java): 动态重定向 Balm API 缺失的方法调用，修复垃圾桶模组 (`TrashSlot`) 加载及运行崩溃问题。
 
 #### 📂 日志保存路径说明
 调试日志模组会自动收集诊断日志并保存至游戏客户端目录下的 **`logs/dev_reports/`** 文件夹中：
