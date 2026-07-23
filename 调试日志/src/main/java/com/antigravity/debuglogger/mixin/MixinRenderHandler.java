@@ -11,9 +11,20 @@ public class MixinRenderHandler {
 
     @Inject(method = "<clinit>", at = @At("RETURN"))
     private static void debuglogger$ensureRenderLayersInitialized(CallbackInfo ci) {
-        if (RenderHandler.DELAYED_RENDER == null || RenderHandler.LATE_DELAYED_RENDER == null) {
-            try {
+        try {
+            if (RenderHandler.DELAYED_RENDER == null) {
                 RenderHandler.onClientSetup(null);
+            }
+        } catch (Throwable t) {
+            try {
+                if (RenderHandler.DELAYED_RENDER == null) {
+                    RenderHandler.DELAYED_RENDER = new RenderHandler.LodestoneRenderLayer(
+                            RenderHandler.BUFFERS, RenderHandler.PARTICLE_BUFFERS);
+                }
+                if (RenderHandler.LATE_DELAYED_RENDER == null) {
+                    RenderHandler.LATE_DELAYED_RENDER = new RenderHandler.LodestoneRenderLayer(
+                            RenderHandler.LATE_BUFFERS, RenderHandler.LATE_PARTICLE_BUFFERS);
+                }
             } catch (Throwable ignored) {
             }
         }

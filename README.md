@@ -3,6 +3,11 @@
 欢迎使用 **勇者之章Ⅲ 整合包自研 MOD 源码仓库**！本仓库包含了为 《勇者之章Ⅲ v3.12.15》 整合包专属定制开发、优化与崩溃防护的全部 MOD 项目源码、功能架构解析与详细使用说明。
 
 > [!IMPORTANT]
+> **核心调试与诊断规范 (DebugLogger Diagnostic & Logging Rule)**
+> 1. **调试日志优先**: 遇到任何游戏问题或崩溃时，必须**优先查看【调试日志 MOD】（`DebugLogger`）输出的完整调试日志/诊断报告（`logs/dev_reports/` 与 `logs/latest.log`）**，结合真实日志证据精准定位根源并针对性修复。
+> 2. **日志动态补充**: 若当前日志中未包含问题的详细上下文或对应日志，**必须第一时间向【调试日志 MOD】（`d:\Plain Craft Launcher 2\开发mod源码\调试日志`）添加更多相关的调试日志打印与异常捕获逻辑**，重新编译部署后获取完整的运行轨迹，绝不凭空推测！
+
+> [!NOTE]
 > **开发环境说明**
 > - **Minecraft 版本**: `1.20.1`
 > - **Forge API 版本**: `47.4.13`
@@ -30,51 +35,12 @@
 
 ---
 
-## 🔍 各 MOD 源码功能与详情使用手册
-
-### 0. ⚡ 自定义等价交换EMC (`CustomEMC`)
-
-#### 📌 源码组件说明
-- [CustomEMCMod.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/CustomEMCMod.java): 模组主入口，负责初始化与事件总线监听。
-- [CustomEMCMapper.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/CustomEMCMapper.java): 继承 `IEMCMapper`，实现对 ProjectE EMC 拓扑树的动态注入。支持全局无价格物品的默认 5555 EMC 自动补充（`setValueAfter`）以及自定义指定物品 EMC 的强行覆写（`setValueBefore`）。
-- [ConfigManager.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/ConfigManager.java): 配置文件数据持久化（读写 `.minecraft/config/custom_emc.json`），自动格式化生成默认规则。
-- [CustomEMCScreen.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/client/gui/CustomEMCScreen.java): 现代化深色玻璃质感控制面板 GUI。支持实时修改默认 EMC、一键抓取主手物品 ID、指定物品价格修改与自动发送指令重载 ProjectE EMC。
-- [KeyInit.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC/src/main/java/com/customemc/client/KeyInit.java): 注册 `F8` 打开 GUI 的按键绑定，分类汉化为 **`自定义等价交换EMC`**，原生支持在原版控制菜单中重绑定单键或组合键。
-
----
-
-### 1. 🎯 定位物品-怪 (`ItemEntityTracker`)
-
-#### 📌 源码组件说明
-- [ItemEntityTracker.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA/src/main/java/com/antigravity/tracker/ItemEntityTracker.java): 模组主入口类，初始化客户端与事件注册。
-- [TrackerScreen.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA/src/main/java/com/antigravity/tracker/client/gui/TrackerScreen.java): 可视化配置 GUI，包含【怪物与实体】、【方块与矿石】、【物品与掉落物】、【全局设置】4 大页签，支持实时搜索与 8 种高亮颜色自由切换。
-- [WorldRenderHandler.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA/src/main/java/com/antigravity/tracker/client/render/WorldRenderHandler.java): 3D 空间 ESP 渲染引擎，在视距范围内渲染实体/矿石彩框透视、追查连接射线与悬浮距离文本 (`[僵尸] 12.8m`)。
-
----
-
-### 2. 🛠️ 开发者辅助 (`DeveloperHelper`)
-
-#### 📌 源码组件说明
-- [DevHelper.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9/src/main/java/com/antigravity/devhelper/DevHelper.java): 模组主入口，注册网络包与逻辑监听。
-- [DevHelperScreen.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9/src/main/java/com/antigravity/devhelper/client/gui/DevHelperScreen.java): 可视化全模组自适应面板，包含动态属性搜寻框、可滚动列表、基础值与当前值对照、快捷加点与自定义数值改写提交。
-
----
-
-### 3. 🛠️ 调试日志 (`DebugLogger`)
-
-#### 📌 源码组件说明
-- [DebugLogger.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/DebugLogger.java): 模组入口，注册退出游戏及服务端停止时的自动保存事件。
-- [MixinSpiritCrucibleRenderer.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/mixin/MixinSpiritCrucibleRenderer.java) / [MixinVoidDepotRenderer.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/mixin/MixinVoidDepotRenderer.java): 自动在客户端类加载阶段对 Lodestone 的 `RenderHandler.DELAYED_RENDER` 进行提前初始化防护，彻底防护掉 Malum 邪恶魔法邪物在静态初始化时的空指针崩溃（`NullPointerException`）。
-- [MixinCreativeModeTab.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/mixin/MixinCreativeModeTab.java): 在后台自动拦截并修正所有 count 异常的违规堆叠物品，防止 JEI 扫描创造页签时崩溃卡死导致全枪械与物品索引丢失。
-- [LogCollector.java](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97/src/main/java/com/antigravity/debuglogger/util/LogCollector.java): 日志收集与容量管理引擎。自动将诊断报告限制在 30 份最新文件内。
-
----
-
 ## 📜 维护与更新历史
 
 - **2026-07-24**:
+  - 建立 **【调试日志优先诊断与日志动态扩充】** 全局开发规范。
   - 全面重构 **【调试日志 (`DebugLogger`)】** 崩溃防护系统：
-    - 全量迁移并集成了 Lodestone 渲染层的 `MixinRenderHandler`、Malum 邪物模组的 `MixinSpiritCrucibleRenderer` / `MixinVoidDepotRenderer`。
+    - 全量迁移并集成了 Lodestone 渲染层的 `MixinRenderHandler`、Malum 邪物模组的 `MixinSpiritCrucibleRenderer` / `MixinVoidDepotRenderer`（包含 `LodestoneRenderLayer` 手动实例化死锁兜底防护）。
     - 结合 `Throwable` 级防崩拦截与 `MixinCreativeModeTab` 物品堆叠修正，彻底消除创造页签与 JEI 构建过程中的崩溃泄露，保障 TACZ 枪械与全模组物品列表平稳加载。
     - 重新编译打包 `[调试日志]DebugLogger-1.0.0.jar` 并覆盖更新至 `mods/` 文件夹。
   - 新增全新自研模组 **【自定义等价交换EMC (`CustomEMC`)】**，支持按 `F8` 打开现代风 GUI 面板（按键分类汉化为 `自定义等价交换EMC`），并可一键重载 ProjectE EMC。
