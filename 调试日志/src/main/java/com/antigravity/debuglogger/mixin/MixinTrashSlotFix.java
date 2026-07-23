@@ -1,19 +1,28 @@
 package com.antigravity.debuglogger.mixin;
 
-import net.blay09.mods.balm.api.event.client.screen.ScreenInitEvent;
+import net.blay09.mods.kuma.api.ManagedKeyMapping;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Pseudo
 @Mixin(targets = "net.blay09.mods.trashslot.client.TrashSlotGuiHandler", remap = false)
 public class MixinTrashSlotFix {
 
-    @Inject(method = "onScreenInit", at = @At("HEAD"), cancellable = true)
-    private static void safeOnScreenInit(ScreenInitEvent.Post event, CallbackInfo ci) {
-        // 彻底熔断 TrashSlotGuiHandler.onScreenInit，避免其在 Balm 7.3.9 下调用缺失的 isUnbound() 引发 NoSuchMethodError 崩溃！
-        ci.cancel();
+    @Redirect(
+            method = "onScreenInit",
+            at = @At(value = "INVOKE", target = "Lnet/blay09/mods/kuma/api/ManagedKeyMapping;isUnbound()Z"),
+            require = 0
+    )
+    private static boolean redirectIsUnbound(ManagedKeyMapping keyMapping) {
+        if (keyMapping == null) return true;
+        try {
+            return keyMapping.isUnbound();
+        } catch (Throwable t) {
+            // 当 Kuma API 缺少 isUnbound() 方法时，静默捕获异常并返回 false (代表快捷键生效)
+            // 使得 TrashSlotGuiHandler 正常继续装载并成功在物品栏右下角渲染垃圾桶槽位！
+            return false;
+        }
     }
 }
