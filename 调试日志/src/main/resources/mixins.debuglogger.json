@@ -7,12 +7,7 @@
     "MixinForgeHooksDebugHunter",
     "MixinCreativeModeTab"
   ],
-  "client": [
-    "MixinBlockEntityRenderers",
-    "MixinRenderHandler",
-    "MixinVoidDepotRenderer",
-    "MixinSpiritCrucibleRenderer"
-  ],
+  "client": [],
   "injectors": {
     "defaultRequire": 0
   }
