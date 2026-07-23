@@ -8,6 +8,7 @@
     "MixinCreativeModeTab"
   ],
   "client": [
+    "MixinBlockEntityRenderers",
     "MixinRenderHandler",
     "MixinVoidDepotRenderer",
     "MixinSpiritCrucibleRenderer"
