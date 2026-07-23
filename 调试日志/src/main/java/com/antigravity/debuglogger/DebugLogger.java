@@ -2,10 +2,14 @@ package com.antigravity.debuglogger;
 
 import com.antigravity.debuglogger.client.KeyInputHandler;
 import com.antigravity.debuglogger.util.LogCollector;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
@@ -15,6 +19,8 @@ import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.Map;
 
 @Mod(DebugLogger.MOD_ID)
 public class DebugLogger {
@@ -26,10 +32,25 @@ public class DebugLogger {
 
         modEventBus.addListener(this::onCommonSetup);
         modEventBus.addListener(this::onClientSetup);
+        modEventBus.addListener(EventPriority.HIGHEST, this::onBuildCreativeTab);
 
         MinecraftForge.EVENT_BUS.register(this);
 
-        LOGGER.info("[调试日志] Dev Debug Logger 模组已初始化！");
+        LOGGER.info("[调试日志] Dev Debug Logger 模组与全全自动拦截引擎初始化成功！");
+    }
+
+    private void onBuildCreativeTab(BuildCreativeModeTabContentsEvent event) {
+        try {
+            for (Map.Entry<ItemStack, CreativeModeTab.TabVisibility> entry : event.getEntries()) {
+                ItemStack stack = entry.getKey();
+                if (stack != null && !stack.isEmpty() && stack.getCount() != 1) {
+                    LOGGER.warn("[调试日志-HUNTER] 🚨 成功防护拦截 Malum/非法物品: {} (原 count={}) -> 强制更正为 1",
+                            stack.getItem(), stack.getCount());
+                    stack.setCount(1);
+                }
+            }
+        } catch (Throwable ignored) {
+        }
     }
 
     private void onCommonSetup(FMLCommonSetupEvent event) {
