@@ -7,17 +7,18 @@ import moze_intel.projecte.api.mapper.collector.IMappingCollector;
 import moze_intel.projecte.api.nss.NSSItem;
 import moze_intel.projecte.api.nss.NormalizedSimpleStack;
 import net.minecraft.core.RegistryAccess;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.ReloadableServerResources;
 import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.fml.ModList;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -33,7 +34,7 @@ public class CustomEMCMapper implements IEMCMapper<NormalizedSimpleStack, Long> 
 
     @Override
     public String getDescription() {
-        return "自定义指定物品EMC，未定价物品默认5555，自适应绑定TACZ枪包等NBT物品";
+        return "自定义指定物品EMC，未定价物品默认5555，自适应从创造模式栏全量获取正确NBT实体注册";
     }
 
     @Override
@@ -43,7 +44,7 @@ public class CustomEMCMapper implements IEMCMapper<NormalizedSimpleStack, Long> 
                             RegistryAccess registryAccess,
                             ResourceManager resourceManager) {
 
-        LOGGER.info("[自定义等价交换EMC] 开始注册自定义EMC价格与全模组自适应兜底价格...");
+        LOGGER.info("[自定义等价交换EMC] 开始注册自定义EMC价格与创造模式栏全量自适应 NBT 实体...");
 
         ConfigManager.loadConfig();
         long defaultEmc = ConfigManager.getDefaultEMC();
@@ -71,14 +72,13 @@ public class CustomEMCMapper implements IEMCMapper<NormalizedSimpleStack, Long> 
             LOGGER.info("[自定义等价交换EMC] 成功注册 {} 个自定义指定EMC物品！", customCount);
         }
 
-        // 2. 为全模组未定价物品注入默认 5555 EMC 兜底
+        // 2. 为全模组未定价基础物品注入默认 5555 EMC 兜底
         int defaultCount = 0;
         for (Item item : ForgeRegistries.ITEMS) {
             ResourceLocation loc = ForgeRegistries.ITEMS.getKey(item);
             if (loc == null) continue;
             String idStr = loc.toString();
 
-            // 如果该物品没有在 custom_emc.json 中指定过，则注入默认 EMC
             if (customEmcMap == null || !customEmcMap.containsKey(idStr)) {
                 try {
                     mapper.setValueBefore(NSSItem.createItem(item), defaultEmc);
@@ -87,53 +87,52 @@ public class CustomEMCMapper implements IEMCMapper<NormalizedSimpleStack, Long> 
                 }
             }
         }
-        LOGGER.info("[自定义等价交换EMC] 成功为 {} 个全模组物品注入默认 {} EMC！", defaultCount, defaultEmc);
+        LOGGER.info("[自定义等价交换EMC] 成功为 {} 个全模组基础物品注入默认 {} EMC！", defaultCount, defaultEmc);
 
-        // 🚀 3. TACZ 枪械模组自适应绑定：通过反射提取全枪包 GunId，为每把带 NBT 的具体枪械注册精确 EMC 实体
-        if (ModList.get().isLoaded("tacz")) {
-            try {
-                LOGGER.info("[自定义等价交换EMC] 侦测到 TACZ 枪械模组，开始自适应反射提取全枪包 NBT 注册...");
-                Item gunItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation("tacz", "modern_kinetic_gun"));
-                if (gunItem != null) {
-                    Set<ResourceLocation> gunIds = new HashSet<>();
+        // 🚀 3. 新思路大绝杀：直接从创造模式栏 (CreativeModeTab) 中全量抓取最真实无误的 NBT 物品实体 (包含 TACZ 全枪包 ELP-45 等实体)
+        try {
+            LOGGER.info("[自定义等价交换EMC] 启动【创造模式栏全量数据抓取新思路】，自适应提取带 NBT 的具象化实体...");
+            Set<String> processedSignatures = new HashSet<>();
+            int creativeItemCount = 0;
 
-                    // 抓取 ClientIndexManager / CommonIndexManager
-                    String[] managerClassNames = {
-                            "com.tacz.guns.client.resource.ClientIndexManager",
-                            "com.tacz.guns.resource.CommonIndexManager",
-                            "com.tacz.guns.resource.ServerIndexManager"
-                    };
-
-                    for (String clsName : managerClassNames) {
-                        try {
-                            Class<?> clazz = Class.forName(clsName);
-                            Field field = clazz.getField("GUN_INDEX");
-                            Map<?, ?> map = (Map<?, ?>) field.get(null);
-                            if (map != null) {
-                                for (Object key : map.keySet()) {
-                                    if (key instanceof ResourceLocation loc) {
-                                        gunIds.add(loc);
-                                    }
-                                }
-                            }
-                        } catch (Throwable ignored) {
-                        }
+            for (CreativeModeTab tab : BuiltInRegistries.CREATIVE_MODE_TAB) {
+                if (tab == null) continue;
+                
+                // 抓取创造模式栏和搜索栏中包含的所有现成真实 ItemStack
+                Collection<ItemStack> items = new HashSet<>();
+                try {
+                    Collection<ItemStack> searchItems = tab.getSearchTabDisplayItems();
+                    if (searchItems != null && !searchItems.isEmpty()) {
+                        items.addAll(searchItems);
                     }
-
-                    LOGGER.info("[自定义等价交换EMC] 自适应反射共提取到 {} 个 TACZ 枪械 GunId 索引！", gunIds.size());
-                    for (ResourceLocation gunId : gunIds) {
-                        try {
-                            CompoundTag tag = new CompoundTag();
-                            tag.putString("GunId", gunId.toString());
-                            mapper.setValueBefore(NSSItem.createItem(gunItem, tag), defaultEmc);
-                        } catch (Throwable ignored) {
-                        }
-                    }
-                    LOGGER.info("[自定义等价交换EMC] 成功为 TACZ 全枪包枪械绑定带有 NBT (GunId) 的 EMC 实体！");
+                } catch (Throwable ignored) {
                 }
-            } catch (Throwable t) {
-                LOGGER.warn("[自定义等价交换EMC] 自动遍历 TACZ 枪包发生非致命提示:", t);
+                
+                try {
+                    Collection<ItemStack> displayItems = tab.getDisplayItems();
+                    if (displayItems != null && !displayItems.isEmpty()) {
+                        items.addAll(displayItems);
+                    }
+                } catch (Throwable ignored) {
+                }
+
+                for (ItemStack stack : items) {
+                    if (stack == null || stack.isEmpty()) continue;
+                    try {
+                        // 唯一签名防重复
+                        String signature = stack.getItem().toString() + (stack.hasTag() ? stack.getTag().toString() : "");
+                        if (processedSignatures.add(signature)) {
+                            NSSItem nss = NSSItem.createItem(stack);
+                            mapper.setValueBefore(nss, defaultEmc);
+                            creativeItemCount++;
+                        }
+                    } catch (Throwable ignored) {
+                    }
+                }
             }
+            LOGGER.info("[自定义等价交换EMC] 【创造模式栏新思路大成功】！成功抓取并绑定 {} 个带真实 NBT 的具象化 EMC 实体！", creativeItemCount);
+        } catch (Throwable t) {
+            LOGGER.warn("[自定义等价交换EMC] 从创造模式栏抓取 NBT 实体时发生提示:", t);
         }
     }
 }
