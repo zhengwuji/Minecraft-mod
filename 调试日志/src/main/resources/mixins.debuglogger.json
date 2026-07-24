@@ -6,7 +6,8 @@
   "mixins": [
     "MixinForgeHooksDebugHunter",
     "MixinCreativeModeTab",
-    "MixinProjectEDebugLogger"
+    "MixinProjectEDebugLogger",
+    "MixinProjectENBTManager"
   ],
   "client": [],
   "injectors": {
