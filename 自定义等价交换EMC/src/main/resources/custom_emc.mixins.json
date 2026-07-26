@@ -4,7 +4,8 @@
   "package": "com.customemc.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "MixinSlotTypeMessageBuilder"
+    "MixinSlotTypeMessageBuilder",
+    "MixinBlockEntityOwnable"
   ],
   "client": [
   ],
