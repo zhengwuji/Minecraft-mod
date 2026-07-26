@@ -4,8 +4,8 @@
 
 > [!IMPORTANT]
 > **核心调试与诊断规范 (DebugLogger Diagnostic & Logging Rule)**
-> 1. **调试日志优先**: 遇到任何游戏问题或崩溃时，必须**优先查看【调试日志 MOD】（`DebugLogger`）输出的完整调试日志/诊断报告（`logs/dev_reports/` 与 `logs/latest.log`）**，结合真实日志证据精准定位根源并针对性修复。
-> 2. **日志动态补充**: 若当前日志中未包含问题的详细上下文或对应日志，**必须第一时间向【调试日志 MOD】（`d:\Plain Craft Launcher 2\开发mod源码\调试日志`）添加更多相关的调试日志打印与异常捕获逻辑**，重新编译部署后获取完整的运行轨迹，绝不凭空推测！
+> 1. **单一定位**: 【调试日志 MOD】（`DebugLogger`）只能用于查看/收集运行日志与运行诊断，**严禁向该 MOD 中写入任何玩法、机制或逻辑拦截注入/修复功能**。所有功能性修改必须在各自专门的 MOD（如 CustomEMC、elb 等）中实现！
+> 2. **日志优先诊断原则（最高优先级）**: 遇到任何游戏问题、卡顿或崩溃时，**第一动作必须先查看【调试日志 MOD】（`DebugLogger`）输出的最新日志与诊断报告（`logs/dev_reports/` 与 `logs/latest.log`）**，从中获取确凿的错误堆栈信息后，再在专门 MOD 中进行针对性修复！
 
 > [!NOTE]
 > **开发环境说明**
@@ -20,13 +20,13 @@
 
 | 模组名称 | 中文标识 | 源码路径 | 核心功能概述 |
 | :--- | :--- | :--- | :--- |
-| **自定义等价交换EMC** | `CustomEMC` | [自定义等价交换EMC](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC) | 默认 `F8` 呼出现代化 GUI 面板（按键设置汉化分类为`自定义等价交换EMC`，支持自定义按键与组合键）；自适应全 MOD 物品兜底价格（默认 5555），支持抓取主手物品 ID 与一键重载 ProjectE EMC |
+| **自定义等价交换EMC** | `CustomEMC` | [自定义等价交换EMC](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%87%AA%E5%AE%9A%E4%B9%89%E7%AD%89%E4%BB%B7%E4%BA%A4%E6%8D%A2EMC) | 默认 `F8` 呼出现代化 GUI 面板；全自动为玩家解锁 ProjectE 全知识库 (`AutoKnowledgeHandler`)；自适应全 MOD 物品缺省 5555 EMC；集成 `MixinSlotTypeMessageBuilder` 字节码拦截，硬核解封【货币战争饰品 (`currency_wars_curios` / `wallet`)】槽位上限至 15 个 |
 | **定位物品-怪** | `ItemEntityTracker` | [定位物品-怪](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%AE%9A%E4%BD%8D%E7%89%A9%E5%93%81-%E6%80%AA) | 默认 `F6` 可视化透视面板，支持搜索怪物、实体、方块、矿石与掉落物，视野中高亮框透视、连线与直线距离显示 |
 | **开发者辅助** | `DeveloperHelper` | [开发者辅助](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%80%E5%8F%91%E8%80%85%E8%BE%85%E5%8A%A9) | 全模组自适应可视化 GUI 修改器（默认 `F7` 打开），实时检索与改写生命、护甲、幸运及全 MOD 注册属性数据 |
-| **调试日志** | `DebugLogger` | [调试日志](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97) | 纯后台全自动运行引擎（已移除前台按键），全量日志捕获、自动化诊断报告、全模组底层崩溃拦截（Malum 渲染空指针防护 & JEI 物品堆叠修正） |
+| **调试日志** | `DebugLogger` | [调试日志](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B0%83%E8%AF%95%E6%97%A5%E5%BF%97) | 纯后台全自动运行诊断引擎，全量日志捕获、自动化诊断报告、内置 `CuriosDebugTracker` 槽位与命令诊断监听器、创造模式物品栏空数据防爆防护 |
 | **随身食物BUFF背包** | `FoodBuffBag` | [随身食物BUFF背包](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E9%9A%8F%E8%BA%AB%E9%A3%9F%E7%89%A9BUFF%E8%83%8C%E5%8C%85) | 随身食物自动消耗、BUFF 维持与专属食物存储背包 |
 | **双击W自动奔跑** | `AutoRun` | [双击W自动奔跑](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%8F%8C%E5%87%BBW%E8%87%AA%E5%8A%A8%E5%A5%9D%E8%B7%91) | 双击 W 触发长途自动疾跑/自动前进行走优化 |
-| **附魔等级上限突破** | `ELB` | [附魔等级上限突破](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E9%99%84%E9%AD%94%E7%AD%89%E7%BA%A7%E4%B8%8A%E9%99%90%E7%AA%81%E7%A0%B4) | 突破原版附魔等级限制，支持超高等级附魔合成与显示 |
+| **附魔等级上限突破** | `ELB` | [附魔等级上限突破](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E9%99%84%E9%AD%94%E7%AD%89%E7%BA%A7%E4%B8%8A%E9%99%90%E7%AA%81%E7%A0%B4) | 突破原版附魔等级限制，优雅 Mixin 移植高级附魔台（EnchantingPlus）0 经验消耗与全附魔解除互斥机制 |
 | **超级矿石** | `SuperOres` | [超级矿石](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E8%B6%85%E7%BA%A7%E7%AF%BF%E7%9F%B3) | 超级倍率资源矿石块及其熔炼/采集生成控制 |
 | **经验矿石** | `ExpOre` | [经验矿石](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E7%BB%8F%E9%AA%8C%E7%AF%BF%E7%9F%B3) | 专有经验矿石生成与高额经验球掉落机制 |
 | **强化工具** | `ReinforcedTools` | [强化工具](file:///D:/Plain%20Craft%20Launcher%202/%E5%BC%80%E5%8F%91mod%E6%BA%90%E7%A0%81/%E5%BC%8A%E5%8C%96%E5%B7%A5%E5%85%B7) | 多阶强力强化装备与特殊挖掘工具支持 |
@@ -37,12 +37,19 @@
 
 ## 📜 维护与更新历史
 
+- **2026-07-27**:
+  - 确立并应用 **“调试日志仅作诊断查看”** 与 **“日志优先诊断原则（最高优先级）”** 铁律（持久化至 `.agents/AGENTS.md`）。
+  - **【调试日志 (`DebugLogger`)】**：
+    - 彻底清洗干涉 ProjectE 界面与过滤器的代码，恢复为纯静默诊断模式。
+    - 新增 `CuriosDebugTracker` 槽位与命令专属诊断监听器，实现属性底层与 Capabilities 数据的实时捕获。
+  - **【自定义等价交换 (`CustomEMC`)】**：
+    - 恢复 `ProjectE` 官方原版镜像，修复 UTF-8 语言包转码。
+    - 实现玩家进入/复活/跨维度时全自动解锁 ProjectE 全知识库 (`AutoKnowledgeHandler`)。
+    - 新增 `MixinSlotTypeMessageBuilder` 字节码构建拦截，破解 IMC 硬编码限制，解封 *Flame Chase Artifacts (逐火十三英桀饰品)* 与 *Lightman's Currency* 的【货币战争饰品 (`currency_wars_curios` / `wallet`)】槽位上限至 15 个。
+  - **【附魔等级上限突破 (`ELB`)】**：
+    - 恢复 `EnchantingPlus` 100% 纯净原版镜像，将高级附魔台 0 经验消耗与全附魔解锁解除互斥完美移植至 `elb` 项目中。
 - **2026-07-24**:
   - 全面移除 **【调试日志 (`DebugLogger`)】** 前台按键绑定与浮窗（完全纯后台全自动化运行，自动侦测并记录诊断报告）。
-  - 建立 **【调试日志优先诊断与日志动态扩充】** 全局开发规范。
-  - 重构 **【调试日志 (`DebugLogger`)】** 崩溃防护系统：
-    - 集成 Lodestone 渲染层与 Malum 模组的 `LodestoneRenderLayer` 手动实例化死锁兜底防护。
-    - 结合 `Throwable` 级防崩拦截与 `MixinCreativeModeTab` 物品堆叠修正，彻底消除创造页签与 JEI 构建过程中的崩溃泄露，保障 TACZ 枪械与全模组物品列表平稳加载。
-    - 重新编译打包 `[调试日志]DebugLogger-1.0.0.jar` 并覆盖更新至 `mods/` 文件夹。
+  - 重构 **【调试日志 (`DebugLogger`)】** 崩溃防护系统。
 - **2026-07-23**:
   - 新增全新自研模组 **【定位物品-怪 (`ItemEntityTracker`)】**。

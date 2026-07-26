@@ -39,7 +39,7 @@ mixin {
 dependencies {
     minecraft 'net.minecraftforge:forge:1.20.1-47.4.13'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    compileOnly fileTree(dir: 'D:/Plain Craft Launcher 2/.minecraft/versions/勇者之章Ⅲ v3.12.15/mods', include: ['*.jar'])
+    compileOnly fileTree(dir: 'D:/Plain Craft Launcher 2/.minecraft/versions/涟漪之篇·如涟漪之所见/mods', include: ['*.jar'])
 }
 
 jar {

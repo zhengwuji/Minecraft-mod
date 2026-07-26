@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.Map;
 
-@EMCMapper(priority = -999)
+@EMCMapper(priority = 999)
 public class CustomEMCMapper implements IEMCMapper<NormalizedSimpleStack, Long> {
     private static final Logger LOGGER = LogManager.getLogger();
 

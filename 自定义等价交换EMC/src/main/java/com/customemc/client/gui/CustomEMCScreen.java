@@ -97,8 +97,9 @@ public class CustomEMCScreen extends Screen {
 
         this.addRenderableWidget(Button.builder(Component.literal("重载并更新 ProjectE EMC"), btn -> {
             if (this.minecraft != null && this.minecraft.player != null) {
-                this.minecraft.player.connection.sendUnsignedCommand("projecte reloadEMC");
-                this.statusMessage = "已发送 ProjectE 重载命令！";
+                this.minecraft.player.connection.sendUnsignedCommand("reload");
+                com.customemc.AutoKnowledgeHandler.grantFullKnowledge(this.minecraft.player);
+                this.statusMessage = "已成功发送 EMC 重载指令 (/reload) 并刷新全知识状态！";
                 this.statusColor = 0xFF55FF55;
             }
         }).bounds(left + 160, top + 175, 140, 20).build());

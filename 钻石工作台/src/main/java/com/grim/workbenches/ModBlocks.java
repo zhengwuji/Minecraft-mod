@@ -15,16 +15,6 @@ import net.minecraftforge.registries.RegistryObject;
 
 public class ModBlocks {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, "grimpack");
-    public static final RegistryObject<Block> IRON_WORKBENCH = registerBlock("iron_workbench", () -> new WorkbenchBlock(BlockBehaviour.Properties.copy(Blocks.CRAFTING_TABLE), 2, "container.iron_workbench"));
-    public static final RegistryObject<Block> DIAMOND_WORKBENCH = registerBlock("diamond_workbench", () -> new WorkbenchBlock(BlockBehaviour.Properties.copy(Blocks.CRAFTING_TABLE), 4, "container.diamond_workbench"));
-
-    private static <T extends Block> RegistryObject<T> registerBlock(String name, Supplier<T> block) {
-        RegistryObject<T> toReturn = BLOCKS.register(name, block);
-        registerBlockItem(name, toReturn);
-        return toReturn;
-    }
-
-    private static <T extends Block> RegistryObject<Item> registerBlockItem(String name, RegistryObject<T> block) {
-        return ModItems.ITEMS.register(name, () -> new BlockItem((Block)block.get(), new Item.Properties()));
-    }
+    public static final RegistryObject<Block> IRON_WORKBENCH = BLOCKS.register("iron_workbench", () -> new WorkbenchBlock(BlockBehaviour.Properties.copy(Blocks.CRAFTING_TABLE), 2, "container.iron_workbench"));
+    public static final RegistryObject<Block> DIAMOND_WORKBENCH = BLOCKS.register("diamond_workbench", () -> new WorkbenchBlock(BlockBehaviour.Properties.copy(Blocks.CRAFTING_TABLE), 4, "container.diamond_workbench"));
 }

@@ -22,10 +22,16 @@ public class ClientModEvents {
 
         @SubscribeEvent
         public static void onKeyInput(InputEvent.Key event) {
-            if (KeyInit.OPEN_GUI_KEY.consumeClick()) {
-                if (Minecraft.getInstance().screen == null) {
-                    Minecraft.getInstance().setScreen(new CustomEMCScreen());
+            try {
+                if (KeyInit.OPEN_GUI_KEY != null && KeyInit.OPEN_GUI_KEY.getKey() != null) {
+                    if (event.getKey() == KeyInit.OPEN_GUI_KEY.getKey().getValue() && event.getAction() == 1) { // 1 == GLFW_PRESS
+                        Minecraft mc = Minecraft.getInstance();
+                        if (mc.screen == null) {
+                            mc.setScreen(new CustomEMCScreen());
+                        }
+                    }
                 }
+            } catch (Throwable ignored) {
             }
         }
     }

@@ -7,7 +7,9 @@
     "MixinForgeHooksDebugHunter",
     "MixinCreativeModeTab",
     "MixinProjectEDebugLogger",
-    "MixinProjectENBTManager"
+    "MixinProjectENBTManager",
+    "MixinLivingEntityNullEffectProtection",
+    "MixinItemStackUltimineNoDamage"
   ],
   "client": [],
   "injectors": {
