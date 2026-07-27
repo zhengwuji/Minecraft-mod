@@ -8,8 +8,6 @@
     "MixinBlockEntityEMCLink"
   ],
   "client": [
-    "MixinNowPlayingDisplay",
-    "MixinBgmPlayer"
   ],
   "injectors": {
     "defaultRequire": 0
