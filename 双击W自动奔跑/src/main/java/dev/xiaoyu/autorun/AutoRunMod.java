@@ -1,7 +1,6 @@
 package dev.xiaoyu.autorun;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -13,7 +12,7 @@ import org.lwjgl.glfw.GLFW;
 
 @Mod("autorun")
 public class AutoRunMod {
-    public static boolean autoRunActive = false;
+    public static boolean isDoubleWSprinting = false;
     private static long lastWPressTime = 0;
 
     public AutoRunMod() {
@@ -27,37 +26,20 @@ public class AutoRunMod {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.screen != null) return;
 
-        // Check if key corresponds to the forward key mapping
+        // 检测前进键 (W)
         if (mc.options.keyUp.matches(event.getKey(), event.getScanCode())) {
             if (event.getAction() == GLFW.GLFW_PRESS) {
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - lastWPressTime < 300) {
-                    // Double clicked W!
-                    autoRunActive = !autoRunActive;
-                    if (autoRunActive) {
-                        mc.player.displayClientMessage(Component.literal("\u00a7a[\u81ea\u52a8\u5954\u8dd1] \u5df2\u5f00\u542f"), true);
-                    } else {
-                        mc.player.displayClientMessage(Component.literal("\u00a7c[\u81ea\u52a8\u5954\u8dd1] \u5df2\u5173\u95ed"), true);
-                        // Reset key state
-                        mc.options.keyUp.setDown(false);
-                    }
-                    lastWPressTime = 0; // Prevent triple click issues
-                    return; // EXIT EARLY to prevent immediate self-cancellation!
+                    // 双击 W，开启疾跑标记
+                    isDoubleWSprinting = true;
+                    lastWPressTime = 0;
+                } else {
+                    lastWPressTime = currentTime;
                 }
-                lastWPressTime = currentTime;
-            }
-        }
-
-        // If auto run is active, any other movement key press cancels it
-        if (autoRunActive && event.getAction() == GLFW.GLFW_PRESS) {
-            if (mc.options.keyDown.matches(event.getKey(), event.getScanCode()) ||
-                mc.options.keyLeft.matches(event.getKey(), event.getScanCode()) ||
-                mc.options.keyRight.matches(event.getKey(), event.getScanCode()) ||
-                mc.options.keyUp.matches(event.getKey(), event.getScanCode())) {
-                
-                autoRunActive = false;
-                mc.options.keyUp.setDown(false);
-                mc.player.displayClientMessage(Component.literal("\u00a7c[\u81ea\u52a8\u5954\u8dd1] \u5df2\u5173\u95ed"), true);
+            } else if (event.getAction() == GLFW.GLFW_RELEASE) {
+                // 松开 W 键，立即关闭疾跑标记，恢复正常
+                isDoubleWSprinting = false;
             }
         }
     }
@@ -67,17 +49,14 @@ public class AutoRunMod {
         if (event.phase == TickEvent.Phase.START) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null) {
-                if (mc.screen != null && autoRunActive) {
-                    autoRunActive = false;
-                    mc.options.keyUp.setDown(false);
+                // 如果没有按住 W 键或打开了菜单，确保重置
+                if (!mc.options.keyUp.isDown() || mc.screen != null) {
+                    isDoubleWSprinting = false;
                 }
-                
-                if (autoRunActive) {
-                    // Keep W key down
-                    mc.options.keyUp.setDown(true);
-                    
-                    // Force sprinting
-                    if (!mc.player.isSprinting() && mc.player.moveDist > 0) {
+
+                // 按住 W 且在双击状态下，保持强行疾跑
+                if (isDoubleWSprinting && mc.options.keyUp.isDown()) {
+                    if (!mc.player.isSprinting()) {
                         mc.player.setSprinting(true);
                     }
                 }
