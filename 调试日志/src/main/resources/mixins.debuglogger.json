@@ -4,12 +4,9 @@
   "package": "com.antigravity.debuglogger.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "MixinForgeHooksDebugHunter",
-    "MixinCreativeModeTab",
     "MixinProjectEDebugLogger",
     "MixinProjectENBTManager",
-    "MixinLivingEntityNullEffectProtection",
-    "MixinItemStackUltimineNoDamage"
+    "MixinLivingEntityNullEffectProtection"
   ],
   "client": [],
   "injectors": {

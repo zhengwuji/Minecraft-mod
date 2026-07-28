@@ -35,8 +35,11 @@
 
 ---
 
-## 📜 维护与更新历史
-
+- **2026-07-28**:
+  - **【放置物品数量重置 BUG 彻底修复】**：
+    - 排查并修复了玩家放置一组 64 个物品（如红石块）后手持数量被误重置为 1 个的严重 BUG。
+    - 彻底移除 `MixinForgeHooksDebugHunter` 对 `ForgeHooks.getCount()` 的全局 `@Redirect` 拦截，以及 `DebugLogger` 和 `ItemDisplayBuilderMixin` 中对原始 `ItemStack` 对象做 `stack.setCount(1)` 的篡改代码。
+    - 再次强化与践行 **【调试日志 MOD (DebugLogger) 专项规则】**，确保 DebugLogger 保持 100% 纯静默诊断，严禁写入任何玩法与逻辑修改。
 - **2026-07-27**:
   - 确立并应用 **“调试日志仅作诊断查看”** 与 **“日志优先诊断原则（最高优先级）”** 铁律（持久化至 `.agents/AGENTS.md`）。
   - **【调试日志 (`DebugLogger`)】**：

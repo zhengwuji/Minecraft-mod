@@ -41,9 +41,8 @@ public class DebugLogger {
             for (Map.Entry<ItemStack, CreativeModeTab.TabVisibility> entry : event.getEntries()) {
                 ItemStack stack = entry.getKey();
                 if (stack != null && !stack.isEmpty() && stack.getCount() != 1) {
-                    LOGGER.warn("[调试日志-HUNTER] 🚨 成功防护拦截非法物品堆叠: {} (原 count={}) -> 强制更正为 1",
+                    LOGGER.warn("[调试日志-DIAG] 🔍 检测到创造页签非法物品堆叠: {} (count={})",
                             stack.getItem(), stack.getCount());
-                    stack.setCount(1);
                 }
             }
         } catch (Throwable ignored) {
